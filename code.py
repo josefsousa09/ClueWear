@@ -1,16 +1,133 @@
+import board
+import time
+import displayio
 from adafruit_clue import clue
-clue_data = clue.simple_text_display(title="CLUE Sensor Data!", title_scale=2)
+from simpleio import map_range
+from adafruit_bitmap_font import bitmap_font
+from adafruit_lsm6ds import lsm6ds33,Rate,AccelRange
+from adafruit_progressbar import progressbar
+from adafruit_display_text.label import Label
+
+clue.pixel.brightness = (0.0)
+
+sensor = lsm6ds33.LSM6DS33(board.I2C())
+
+step_goal = 10
+
+a_state = False
+b_state = False
+bright_level = [0,0.5,1]
+
+countdown = 0 #  variable for the step goal progress bar
+clock = 0 #  variable used to keep track of time for the steps per hour counter
+clock_count = 0 #  holds the number of hours that the step counter has been running
+clock_check = 0 #  holds the result of the clock divided by 3600 seconds (1 hour)
+last_step = 0 #  state used to properly counter steps
+mono = time.monotonic() #  time.monotonic() device
+mode = 1 #  state used to track screen brightness
+steps_log = 0 #  holds total steps to check for steps per hour
+steps_remaining = 0 #  holds the remaining steps needed to reach the step goal
+sph = 0 #  holds steps per hour
+
+clue_bgBMP = "/clue_bgBMP.bmp"
+small_font = "/fonts/-16.bdf"
+med_font = "/fonts/-24.bdf"
+big_font = "/fonts/-48.bdf"
+
+glyphs = b'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-,.: '
+
+small_font = bitmap_font.load_font(small_font)
+small_font.load_glyphs(glyphs)
+med_font = bitmap_font.load_font(med_font)
+med_font.load_glyphs(glyphs)
+big_font = bitmap_font.load_font(big_font)
+big_font.load_glyphs(glyphs)
+
+clue_display = board.DISPLAY
+clue_display.brightness = 0.5
+
+clueGroup = displayio.Group()
+
+clue_bg = displayio.OnDiskBitmap(open("/clue_bgBMP.bmp", "rb"))
+clue_tilegrid = displayio.TileGrid(clue_bg, pixel_shader=getattr(clue_bg, 'pixel_shader', displayio.ColorConverter()))
+clueGroup.append(clue_tilegrid)
+
+bar_group = displayio.Group()
+prog_bar = progressbar.ProgressBar(11, 239, 25,25,bar_color=0x652f8f)
+bar_group.append(prog_bar)
+
+clueGroup.append(bar_group)
+
+steps_countdown = Label(small_font, text='%d Steps Remaining' % step_goal, color=clue.WHITE)
+steps_countdown.x = 55
+steps_countdown.y = 12
+
+text_steps = Label(big_font, text="0     ", color=0xe90e8b)
+text_steps.x = 45
+text_steps.y = 70
+
+text_sph = Label(med_font, text=" -- ", color=0x29abe2)
+text_sph.x = 8
+text_sph.y = 195
+
+clueGroup.append(text_sph)
+clueGroup.append(steps_countdown)
+clueGroup.append(text_steps)
+
+clue_display.show(clueGroup)
+
+sensor.accelerometer_range = AccelRange.RANGE_2G
+sensor.accelerometer_data_rate = Rate.RATE_26_HZ
+sensor.gyro_data_rate = Rate.RATE_SHUTDOWN
+sensor.pedometer_enable = True
 
 while True:
-    gesture = clue.gesture
-    str = "No gesture"
-    if gesture == 1:
-        str = "UP"
-    elif gesture == 2:
-        str = "DOWN"
-    elif gesture == 3:
-        str = "LEFT"
-    elif gesture == 4:
-        str = "RIGHT"
-    clue_data[5].text = f"Gesture: {str}"
-    clue_data.show()
+    if not clue.button_a and not a_state:
+        a_state = True
+    if not clue.button_b and not b_state:
+        b_state = True
+
+    steps = sensor.pedometer_steps
+
+    countdown = map_range(steps, 0, step_goal, 0.0, 1.0)
+    if abs(steps-last_step) > 1:
+        step_time = time.monotonic()
+        last_step = steps
+
+        text_steps.text = '%d' % steps
+
+        clock = step_time - mono
+
+    if clock > 3600:
+        clock_check = clock / 3600
+        steps_log = steps
+        clock_count += round(clock_check)
+        print('hour count: %d' % clock_count)
+        sph = steps_log / clock_count
+        text_sph.text = '%d' % sph
+        clock = 0
+        mono = time.monotonic()
+        progressbar.ProgressBar.progress = float(countdown)
+        if step_goal - steps > 0:
+            steps_remaining = step_goal - steps
+            steps_countdown.text = '%d Steps Remaining' % steps_remaining
+        else:
+            steps_countdown.text = 'Steps Goal Met!'
+
+        if clue.button_a and a_state:
+            mode -= 1
+            a_state = False
+            if mode < 0:
+                mode = 0
+                clue_display.brightness = bright_level[mode]
+            else:
+                clue_display.brightness = bright_level[mode]
+
+        if clue.button_b and b_state:
+            mode += 1
+            b_state = False
+            if mode > 2:
+                mode = 2
+                clue_display.brightness = bright_level[mode]
+            else:
+                clue_display.brightness = bright_level[mode]

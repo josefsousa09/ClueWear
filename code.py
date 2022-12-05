@@ -1,133 +1,88 @@
-import board
 import time
-import displayio
-from adafruit_clue import clue
-from simpleio import map_range
-from adafruit_bitmap_font import bitmap_font
-from adafruit_lsm6ds import lsm6ds33,Rate,AccelRange
-from adafruit_progressbar import progressbar
-from adafruit_display_text.label import Label
+import board
+import digitalio
+import simpleio
+import adafruit_lsm6ds.lsm6ds33
+import adafruit_apds9960.apds9960
+from adafruit_hid.mouse import Mouse
+import adafruit_ble
+from adafruit_ble.advertising import Advertisement
+from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
+from adafruit_ble.services.standard.hid import HIDService
+from adafruit_ble.services.standard.device_info import DeviceInfoService
 
-clue.pixel.brightness = (0.0)
+i2c = board.I2C()
 
-sensor = lsm6ds33.LSM6DS33(board.I2C())
+accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(i2c)
 
-step_goal = 10
+prox = adafruit_apds9960.apds9960.APDS9960(i2c)
 
-a_state = False
-b_state = False
-bright_level = [0,0.5,1]
+prox.enable_proximity = True
 
-countdown = 0 #  variable for the step goal progress bar
-clock = 0 #  variable used to keep track of time for the steps per hour counter
-clock_count = 0 #  holds the number of hours that the step counter has been running
-clock_check = 0 #  holds the result of the clock divided by 3600 seconds (1 hour)
-last_step = 0 #  state used to properly counter steps
-mono = time.monotonic() #  time.monotonic() device
-mode = 1 #  state used to track screen brightness
-steps_log = 0 #  holds total steps to check for steps per hour
-steps_remaining = 0 #  holds the remaining steps needed to reach the step goal
-sph = 0 #  holds steps per hour
+left_click = digitalio.DigitalInOut(board.BUTTON_A)
+left_click.direction = digitalio.Direction.INPUT
+left_click.pull = digitalio.Pull.UP
 
-clue_bgBMP = "/clue_bgBMP.bmp"
-small_font = "/fonts/-16.bdf"
-med_font = "/fonts/-24.bdf"
-big_font = "/fonts/-48.bdf"
+mouse_min = -9
 
-glyphs = b'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-,.: '
+mouse_max = 9
 
-small_font = bitmap_font.load_font(small_font)
-small_font.load_glyphs(glyphs)
-med_font = bitmap_font.load_font(med_font)
-med_font.load_glyphs(glyphs)
-big_font = bitmap_font.load_font(big_font)
-big_font.load_glyphs(glyphs)
+step = (mouse_max - mouse_min) / 20.0
 
-clue_display = board.DISPLAY
-clue_display.brightness = 0.5
+def mouse_steps(axis):
+    return round((axis - mouse_min) / step)
 
-clueGroup = displayio.Group()
+clock = 0
 
-clue_bg = displayio.OnDiskBitmap(open("/clue_bgBMP.bmp", "rb"))
-clue_tilegrid = displayio.TileGrid(clue_bg, pixel_shader=getattr(clue_bg, 'pixel_shader', displayio.ColorConverter()))
-clueGroup.append(clue_tilegrid)
+distance = 245
 
-bar_group = displayio.Group()
-prog_bar = progressbar.ProgressBar(11, 239, 25,25,bar_color=0x652f8f)
-bar_group.append(prog_bar)
+hid = HIDService()
 
-clueGroup.append(bar_group)
+device_info = DeviceInfoService(
+    software_revision=adafruit_ble.__version__,
+    manufacturer="Adafruit")
 
-steps_countdown = Label(small_font, text='%d Steps Remaining' % step_goal, color=clue.WHITE)
-steps_countdown.x = 55
-steps_countdown.y = 12
+advertisement = ProvideServicesAdvertisement(hid)
 
-text_steps = Label(big_font, text="0     ", color=0xe90e8b)
-text_steps.x = 45
-text_steps.y = 70
+advertisement.appearance = 961
 
-text_sph = Label(med_font, text=" -- ", color=0x29abe2)
-text_sph.x = 8
-text_sph.y = 195
+scan_response = Advertisement()
 
-clueGroup.append(text_sph)
-clueGroup.append(steps_countdown)
-clueGroup.append(text_steps)
+scan_response.complete_name = "CP HID"
 
-clue_display.show(clueGroup)
+ble = adafruit_ble.BLERadio()
 
-sensor.accelerometer_range = AccelRange.RANGE_2G
-sensor.accelerometer_data_rate = Rate.RATE_26_HZ
-sensor.gyro_data_rate = Rate.RATE_SHUTDOWN
-sensor.pedometer_enable = True
+if not ble.connected:
+    print("Ready to connect")
+
+else:
+    print("already connected")
+    print(ble.connections)
+
+mouse = Mouse(hid.devices)
 
 while True:
-    if not clue.button_a and not a_state:
-        a_state = True
-    if not clue.button_b and not b_state:
-        b_state = True
+    while not ble.connected:
+        pass
+    while ble.connected:
+        x,y,z = accel.acceleration
 
-    steps = sensor.pedometer_steps
+        horizontal_mov = simpleio.map_range(mouse_steps(x), 1.0,20.0,-15.0, 15.0)
+        vertical_mov = simpleio.map_range(mouse_steps(y), 20.0,1.0,-15.0,15.0)
+        scroll_dir = simpleio.map_range(vertical_mov, -15.0,15.0,3.0,-3.0)
 
-    countdown = map_range(steps, 0, step_goal, 0.0, 1.0)
-    if abs(steps-last_step) > 1:
-        step_time = time.monotonic()
-        last_step = steps
-
-        text_steps.text = '%d' % steps
-
-        clock = step_time - mono
-
-    if clock > 3600:
-        clock_check = clock / 3600
-        steps_log = steps
-        clock_count += round(clock_check)
-        print('hour count: %d' % clock_count)
-        sph = steps_log / clock_count
-        text_sph.text = '%d' % sph
-        clock = 0
-        mono = time.monotonic()
-        progressbar.ProgressBar.progress = float(countdown)
-        if step_goal - steps > 0:
-            steps_remaining = step_goal - steps
-            steps_countdown.text = '%d Steps Remaining' % steps_remaining
+        if prox.proximity > distance:
+                mouse.move(wheel=int(scroll_dir))
         else:
-            steps_countdown.text = 'Steps Goal Met!'
+                mouse.move(x=int(horizontal_mov))
+                mouse.move(y=int(vertical_mov))
 
-        if clue.button_a and a_state:
-            mode -= 1
-            a_state = False
-            if mode < 0:
-                mode = 0
-                clue_display.brightness = bright_level[mode]
-            else:
-                clue_display.brightness = bright_level[mode]
-
-        if clue.button_b and b_state:
-            mode += 1
-            b_state = False
-            if mode > 2:
-                mode = 2
-                clue_display.brightness = bright_level[mode]
-            else:
-                clue_display.brightness = bright_level[mode]
+        if not left_click.value:
+            mouse.click(Mouse.LEFT_BUTTON)
+            time.sleep(0.2)
+            
+            if (clock + 2) < time.monotonic():
+                print("x", mouse_steps(x))
+                print("y", mouse_steps(y))
+                clock = time.monotonic()
+    ble.start_advertising(advertisement)

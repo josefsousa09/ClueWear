@@ -10,6 +10,7 @@ from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
+# from adafruit_clue import clue
 
 i2c = board.I2C()
 
@@ -74,7 +75,8 @@ while True:
         cur_state = sensor_btn.value
         if toggle_value:
             x,y,z = accel.acceleration
-
+            # swap horizontal ranges with vertical's when using in bracelet
+            
             horizontal_mov = simpleio.map_range(mouse_steps(x), 1.0,20.0,-15.0, 15.0)
             vertical_mov = simpleio.map_range(mouse_steps(y), 20.0,1.0,-15.0,15.0)
             scroll_dir = simpleio.map_range(vertical_mov, -15.0,15.0,3.0,-3.0)
@@ -85,7 +87,7 @@ while True:
                 mouse.move(x=int(horizontal_mov))
                 mouse.move(y=int(vertical_mov))
 
-            if not left_click.value:
+            if prox.proximity > 150:
                 mouse.click(Mouse.LEFT_BUTTON)
                 time.sleep(0.2)
             
@@ -93,6 +95,7 @@ while True:
                     print("x", mouse_steps(x))
                     print("y", mouse_steps(y))
                     clock = time.monotonic()
+                    
         if cur_state != last_touch_val:
             if cur_state:
                 toggle_value = not toggle_value

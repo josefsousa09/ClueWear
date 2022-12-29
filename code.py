@@ -23,15 +23,14 @@ sensor_btn = digitalio.DigitalInOut(board.BUTTON_B)
 sensor_btn.direction = digitalio.Direction.INPUT
 sensor_btn.pull = digitalio.Pull.UP
 
-prev_state = sensor_btn.value
-
 mouse_min = -9
 
 mouse_max = 9
 
 step = (mouse_max - mouse_min) / 20.0
 
-
+last_touch_val = False
+toggle_value = False
 def mouse_steps(axis):
     return round((axis - mouse_min) / step)
 
@@ -45,30 +44,10 @@ hid = HIDService()
 mouse = Mouse(hid.devices)
 
 while True:
-    cur_state = prev_state
-    if cur_state != prev_state:
-        print("sensor on")
-
-        x, y, z = accel.acceleration
-
-        horizontal_mov = simpleio.map_range(mouse_steps(x), 1.0, 20.0, -15.0, 15.0)
-        vertical_mov = simpleio.map_range(mouse_steps(y), 20.0, 1.0, -15.0, 15.0)
-        scroll_dir = simpleio.map_range(vertical_mov, -15.0, 15.0, 3.0, -3.0)
-
-        if prox.proximity > distance:
-            mouse.move(wheel=int(scroll_dir))
-        else:
-            mouse.move(x=int(horizontal_mov))
-            mouse.move(y=int(vertical_mov))
-
-        if not left_click.value:
-            mouse.click(Mouse.LEFT_BUTTON)
-            time.sleep(0.2)
-
-            if (clock + 2) < time.monotonic():
-                print("x", mouse_steps(x))
-                print("y", mouse_steps(y))
-                clock = time.monotonic()
-    else:
-        print("sensor off")
-    prev_state = cur_state
+    cur_state = sensor_btn.value
+    if cur_state != last_touch_val:
+        if cur_state:
+            toggle_value = not toggle_value
+            print(toggle_value)
+    last_touch_val = cur_state
+    

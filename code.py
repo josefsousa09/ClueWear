@@ -1,5 +1,5 @@
-from operate_mouse import ClueWear
+from mouse import Pointer
 
-cluewear = ClueWear()
+pointer = Pointer()
 while True:
-    cluewear.operate_mouse()
+    pointer.operate_mouse()

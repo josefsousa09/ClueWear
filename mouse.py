@@ -13,7 +13,8 @@ from adafruit_ble.services.standard.device_info import DeviceInfoService
 from calibration import Calibration
 
 
-class ClueWear:
+class Pointer:
+
     calibration = Calibration()
 
     def __init__(self):
@@ -26,7 +27,6 @@ class ClueWear:
 
         self.prox.enable_proximity = True
         self.calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
-        
         self.calibrate_btn.direction = digitalio.Direction.INPUT
         self.calibrate_btn.pull = digitalio.Pull.UP
         self.calibrate_btn_last_touch_val = False
@@ -46,6 +46,8 @@ class ClueWear:
 
         self.distance = 245
 
+        self.is_calibrating = False
+
         self.hid = HIDService()
 
         self.device_info = DeviceInfoService(
@@ -64,17 +66,18 @@ class ClueWear:
 
     def operate_mouse(self):
         if not self.ble.connected:
-            print("Ready to connect")
+            print("Ready to pair")
 
         else:
-            print("already connected")
+            print("paired")
             print(self.ble.connections)
 
         mouse = Mouse(self.hid.devices)
+        
 
         while True:
             while not self.ble.connected:
-                pass
+                continue
             while self.ble.connected:
                 sensor_btn_cur_state = self.sensor_btn.value
                 calibrate_btn_cur_state = self.calibrate_btn.value
@@ -107,11 +110,17 @@ class ClueWear:
                         self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value
 
                 if calibrate_btn_cur_state != self.calibrate_btn_last_touch_val:
-                    if not calibrate_btn_cur_state:
+                    if not calibrate_btn_cur_state and not self.is_calibrating:
+                        print("CALIBRATE")
+                        self.is_calibrating = True
+                        self.calibrate_btn.deinit()
                         self.calibration.calibrate()
-                    else:
-                        pass
-
+                        self.calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
+                        self.calibrate_btn.direction = digitalio.Direction.INPUT
+                        self.calibrate_btn.pull = digitalio.Pull.UP
+                        self.is_calibrating = False
+                    
+                
                 self.calibrate_btn_last_touch_val = calibrate_btn_cur_state
                 self.sensor_btn_last_touch_val = sensor_btn_cur_state
             self.ble.start_advertising(self.advertisement)

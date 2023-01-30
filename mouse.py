@@ -10,7 +10,7 @@ from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
-from calibration import Calibration
+from calibration.calibration import Calibration
 
 
 class Pointer:
@@ -73,7 +73,6 @@ class Pointer:
             print(self.ble.connections)
 
         mouse = Mouse(self.hid.devices)
-        
 
         while True:
             while not self.ble.connected:
@@ -114,13 +113,21 @@ class Pointer:
                         print("CALIBRATE")
                         self.is_calibrating = True
                         self.calibrate_btn.deinit()
+                        self.sensor_btn.deinit()
                         self.calibration.calibrate()
-                        self.calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
+
+                        self.calibrate_btn = digitalio.DigitalInOut(
+                            board.BUTTON_B)
                         self.calibrate_btn.direction = digitalio.Direction.INPUT
                         self.calibrate_btn.pull = digitalio.Pull.UP
+
+                        self.sensor_btn = digitalio.DigitalInOut(
+                            board.BUTTON_A)
+                        self.sensor_btn.direction = digitalio.Direction.INPUT
+                        self.sensor_btn.pull = digitalio.Pull.UP
+
                         self.is_calibrating = False
-                    
-                
+
                 self.calibrate_btn_last_touch_val = calibrate_btn_cur_state
                 self.sensor_btn_last_touch_val = sensor_btn_cur_state
             self.ble.start_advertising(self.advertisement)

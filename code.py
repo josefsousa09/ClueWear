@@ -1,4 +1,4 @@
-from mouse import Pointer
+from mouse.mouse import Pointer
 
 pointer = Pointer()
 while True:

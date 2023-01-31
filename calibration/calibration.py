@@ -3,10 +3,11 @@ import board
 import digitalio
 import simpleio
 import adafruit_lsm6ds.lsm6ds33
-from calibration.calibration_status import CalibrationStatus
+from helpers import csv_helpers
 
 
 class Calibration:
+    csv_helpers = csv_helpers.CsvHelpers()
 
     def __init__(self):
         self.i2c = board.I2C()
@@ -39,59 +40,35 @@ class Calibration:
         while True:
             calibrate_btn_curr_state = calibrate_btn.value
             cancel_calibration_btn_curr_state = cancel_calibration_btn.value
-            if cancel_calibration_btn_toggle_val:
-                x, y, z = self.accel.acceleration
-                horizontal_mov = simpleio.map_range(
-                    self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)
-                vertical_mov = simpleio.map_range(
-                    self.mouse_steps(y), 20.0, 1.0, -15.0, 15.0)
-
-                if step_counter == CalibrationStatus.START.value:
-                    print("START")
-                    x_movements.append(horizontal_mov)
-                    y_movements.append(vertical_mov)
-
-                elif step_counter == CalibrationStatus.CENTER.value:
-                    print("CENTER")
-                    x_movements.append(horizontal_mov)
-                    y_movements.append(vertical_mov)
-
-                elif step_counter == CalibrationStatus.UP.value:
-                    print("UP")
-                    x_movements.append(horizontal_mov)
-                    y_movements.append(vertical_mov)
-
-                elif step_counter == CalibrationStatus.DOWN.value:
-                    print("DOWN")
-                    x_movements.append(horizontal_mov)
-                    y_movements.append(vertical_mov)
-
-                elif step_counter == CalibrationStatus.RIGHT.value:
-                    print("RIGHT")
-                    x_movements.append(horizontal_mov)
-                    y_movements.append(vertical_mov)
-
-                elif step_counter == CalibrationStatus.LEFT.value:
-                    print("LEFT")
-                    x_movements.append(horizontal_mov)
-                    y_movements.append(vertical_mov)
-
-                elif step_counter == CalibrationStatus.END.value:
-                    print("Processing...")
-                    print(x_movements)
-                    print(y_movements)
-                    step_counter = CalibrationStatus.START.value
 
             if calibrate_btn_curr_state != calibrate_btn_last_touch_val:
                 if not calibrate_btn_curr_state:
-                    calibrate_btn_toggle_val = not calibrate_btn_toggle_val
-                    step_counter+=1
-                    
+                    self.calibration()
+
             if cancel_calibration_btn_curr_state != cancel_calibration_btn_last_touch_val:
                 if not cancel_calibration_btn_curr_state:
                     cancel_calibration_btn_toggle_val = not cancel_calibration_btn_toggle_val
                     cancel_calibration_btn.deinit()
+                    calibrate_btn.deinit()
                     cancel_calibration_btn = None
                     print("CALIBRATION CANCELLED")
                     break
             cancel_calibration_btn_last_touch_val = cancel_calibration_btn_curr_state
+            calibrate_btn_last_touch_val = calibrate_btn_curr_state
+
+    def calibration(self):
+        print("MOVE SIDE TO SIDE")
+        start_time = time.monotonic()
+        movement_data = []
+        while (time.monotonic() - start_time) < 5:
+            movement = self.accel.acceleration
+            movement_data.append(movement + ("horizontal",))
+            time.sleep(0.1)
+        print("UP AND DOWN")
+        start_time = time.monotonic()
+        while (time.monotonic() - start_time) < 5:
+            movement = self.accel.acceleration
+            movement_data.append(movement + ("vertical",))
+            time.sleep(0.1)
+        print("SAVING")
+        self.csv_helpers.save_calibration_data(movement_data)

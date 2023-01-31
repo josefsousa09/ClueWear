@@ -82,7 +82,9 @@ class Pointer:
                 calibrate_btn_cur_state = self.calibrate_btn.value
 
                 if self.sensor_btn_toggle_value:
-                    x, y, z = self.accel.acceleration
+                    x = self.accel.acceleration[0]
+                    y = self.accel.acceleration[1]
+
                     # swap horizontal ranges with vertical's when using in bracelet
                     horizontal_mov = simpleio.map_range(
                         self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)

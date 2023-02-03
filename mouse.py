@@ -2,7 +2,6 @@ import time
 import board
 import digitalio
 import simpleio
-import gc
 import adafruit_lsm6ds.lsm6ds33
 import adafruit_apds9960.apds9960
 from adafruit_hid.mouse import Mouse
@@ -17,7 +16,6 @@ from calibration.calibration import Calibration
 class Pointer:
 
     calibration = Calibration()
-    gc.enable()
     def __init__(self):
 
         self.i2c = board.I2C()

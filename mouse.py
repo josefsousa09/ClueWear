@@ -11,11 +11,14 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
 from calibration.calibration import Calibration
+from ml.knn import KNN
 
 
 class Pointer:
 
     calibration = Calibration()
+    knn = KNN()
+
     def __init__(self):
 
         self.i2c = board.I2C()
@@ -83,7 +86,6 @@ class Pointer:
                 if self.sensor_btn_toggle_value:
                     x = self.accel.acceleration[0]
                     y = self.accel.acceleration[1]
-
                     # swap horizontal ranges with vertical's when using in bracelet
                     horizontal_mov = simpleio.map_range(
                         self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)

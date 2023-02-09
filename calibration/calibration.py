@@ -5,6 +5,8 @@ import simpleio
 import adafruit_lsm6ds.lsm6ds33
 from helpers.csv_helpers import CsvHelpers
 from ml.knn import KNN
+import circuitpython_csv as csv
+
 
 class Calibration:
     csv_helpers = CsvHelpers()
@@ -44,22 +46,27 @@ class Calibration:
             calibrate_btn_last_touch_val = calibrate_btn_curr_state
 
     def calibration(self):
-        # print("SIDE TO SIDE")
-        # start_time = time.monotonic()
-        # movement_data = []
-        # while (time.monotonic() - start_time) < 5:
-        #     movement = self.accel.acceleration
-        #     movement_data.append(movement + (1,))
-        #     time.sleep(0.15)
-        # print("UP AND DOWN")
-        # start_time = time.monotonic()
-        # while (time.monotonic() - start_time) < 5:
-        #     movement = self.accel.acceleration
-        #     movement_data.append(movement + (-1,))
-        #     time.sleep(0.15)
-        # print("SAVING DATA")
-        # self.csv_helpers.save_calibration_data(movement_data)
-        print("ML")
+        filename = "movement_data.csv"
+        print("SIDE TO SIDE")
         start_time = time.monotonic()
-        predictions = self.knn.test()
-        print(time.monotonic() - start_time)
+        with open(filename, mode="w", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            while (time.monotonic() - start_time) < 5:
+                movement = self.accel.acceleration
+                writer.writerow(movement + (0,))
+                time.sleep(0.1)
+        print("UP AND DOWN")
+        start_time = time.monotonic()
+        with open(filename, mode="w", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            while (time.monotonic() - start_time) < 5:
+                movement = self.accel.acceleration
+                writer.writerow(movement + (1,))
+                time.sleep(0.1)
+        print("SAVING DATA")
+        dataset = self.csv_helpers.create_dataset(filename)
+        self.csv_helpers.seperate_labels_and_data(dataset)
+  
+
+
+      

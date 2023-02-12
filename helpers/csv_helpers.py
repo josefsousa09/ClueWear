@@ -8,12 +8,13 @@ class CsvHelpers():
         pass
 
     def seperate_labels_and_data(self,dataset):
-        data = np.empty((len(list(dataset)), 3))
-        labels = np.empty(len(list(dataset)))
-        for i, row in enumerate(dataset):
-            data[i, :] = [float(x) for x in row[:3]]
-            labels[i] = int(row[3])
-
+        data = []
+        labels = []
+        for row in dataset:
+            data.append([float(x) for x in row[:3]])
+            time.sleep(0.2)
+            labels.append(int(row[3]))
+            time.sleep(0.5)
         return data, labels
 
     def write_to_file(self,filename, data):
@@ -27,12 +28,12 @@ class CsvHelpers():
             reader = csv.reader(file)
             for line in reader:
                 dataset.append(line)
-                time.sleep(0.1)
-                if len(dataset) >= 1000:
-                    yield dataset
-                    dataset = []
-        if dataset:
-            yield dataset
+                time.sleep(0.5)
+            return dataset
 
     def save_calibration_data(self,filename, movement_data):
         self.write_to_file(filename, movement_data)
+
+    def chunked_X_train_generator(self,X_train):
+        return np.array(X_train)
+        

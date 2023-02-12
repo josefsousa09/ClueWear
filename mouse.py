@@ -11,13 +11,17 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
 from calibration.calibration import Calibration
+from helpers.csv_helpers import CsvHelpers
 from ml.knn import KNN
+from ulab import numpy as np
+
 
 
 class Pointer:
 
     calibration = Calibration()
     knn = KNN()
+    csv_helpers = CsvHelpers()
 
     def __init__(self):
 
@@ -26,6 +30,8 @@ class Pointer:
         self.accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
 
         self.prox = adafruit_apds9960.apds9960.APDS9960(self.i2c)
+
+        
 
         self.prox.enable_proximity = True
         self.calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
@@ -63,6 +69,12 @@ class Pointer:
 
         self.ble = adafruit_ble.BLERadio()
 
+    dataset = csv_helpers.create_dataset("movement_data.csv")
+    X_train,y_train = csv_helpers.seperate_labels_and_data(dataset)
+
+    X_train = csv_helpers.chunked_X_train_generator(X_train)
+    y_train = np.array(y_train)
+
     def mouse_steps(self, axis):
         return round((axis - self.mouse_min) / self.step)
 
@@ -84,8 +96,12 @@ class Pointer:
                 calibrate_btn_cur_state = self.calibrate_btn.value
 
                 if self.sensor_btn_toggle_value:
-                    x = self.accel.acceleration[0]
-                    y = self.accel.acceleration[1]
+                    x,y,z = self.accel.acceleration
+                    prediction = self.knn.knn(self.X_train,self.y_train,np.array([[x,y,z]]),3)
+                    if prediction == 0:
+                        print("UP")
+                    else:
+                        print("DOWN")
                     # swap horizontal ranges with vertical's when using in bracelet
                     horizontal_mov = simpleio.map_range(
                         self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)

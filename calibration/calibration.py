@@ -6,7 +6,7 @@ import adafruit_lsm6ds.lsm6ds33
 from helpers.csv_helpers import CsvHelpers
 from ml.knn import KNN
 import circuitpython_csv as csv
-
+import gc
 
 class Calibration:
     csv_helpers = CsvHelpers()
@@ -41,6 +41,7 @@ class Calibration:
                     cancel_calibration_btn.deinit()
                     calibrate_btn.deinit()
                     cancel_calibration_btn = None
+                    print("Calibration cancelled")
                     break
             cancel_calibration_btn_last_touch_val = cancel_calibration_btn_curr_state
             calibrate_btn_last_touch_val = calibrate_btn_curr_state
@@ -48,25 +49,33 @@ class Calibration:
     def calibration(self):
         filename = "movement_data.csv"
         print("SIDE TO SIDE")
-        start_time = time.monotonic()
         with open(filename, mode="w", encoding="utf-8") as file:
+            start_time = time.monotonic()
             writer = csv.writer(file)
-            while (time.monotonic() - start_time) < 5:
+            while (time.monotonic() - start_time) <= 5:
                 movement = self.accel.acceleration
                 writer.writerow(movement + (0,))
-                time.sleep(0.1)
-        print("UP AND DOWN")
-        start_time = time.monotonic()
-        with open(filename, mode="w", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            while (time.monotonic() - start_time) < 5:
+                time.sleep(0.15)
+            print("UP AND DOWN")
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) <= 5:
                 movement = self.accel.acceleration
                 writer.writerow(movement + (1,))
-                time.sleep(0.1)
+                time.sleep(0.15)
+            # print("CLICK")
+            # start_time = time.monotonic()
+            # while (time.monotonic() - start_time) < 5:
+            #     movement = self.accel.acceleration
+            #     writer.writerow(movement + (2,))
+            #     time.sleep(0.1)
         print("SAVING DATA")
+        gc.collect()
         dataset = self.csv_helpers.create_dataset(filename)
+        print("SEPERATING")
+        gc.collect()
         self.csv_helpers.seperate_labels_and_data(dataset)
-  
+        print("DONE")
+
 
 
       

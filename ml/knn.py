@@ -23,6 +23,7 @@ class KNN():
     def knn(self,X_train,y_train,X_test,k):
         prediction = self.predict(X_train,y_train,X_test[0],k)
         return prediction
+        
     def test(self,X_train,y_train, X_test):
         X_train = np.array([[100, 200], [150, 150], [200, 100]])
         y_train = np.array([0, 1, 2])
@@ -30,3 +31,4 @@ class KNN():
         k = 3
         predictions = self.knn(X_train, y_train, X_test, k)
         return predictions
+        

@@ -11,11 +11,11 @@ class CsvHelpers():
         data = []
         labels = []
         for row in dataset:
-            data.append([float(x) for x in row[:3]])
+            data.append([float(x) for x in row[:6]])
             time.sleep(0.2)
-            labels.append(int(row[3]))
+            labels.append(int(row[6]))
             time.sleep(0.5)
-        return data, labels
+        return np.array(data), np.array(labels)
 
     def write_to_file(self,filename, data):
         with open(filename, 'w', newline='') as file:

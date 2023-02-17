@@ -72,9 +72,6 @@ class Pointer:
     dataset = csv_helpers.create_dataset("movement_data.csv")
     X_train,y_train = csv_helpers.seperate_labels_and_data(dataset)
 
-    X_train = csv_helpers.chunked_X_train_generator(X_train)
-    y_train = np.array(y_train)
-
     def mouse_steps(self, axis):
         return round((axis - self.mouse_min) / self.step)
 
@@ -97,32 +94,26 @@ class Pointer:
 
                 if self.sensor_btn_toggle_value:
                     x,y,z = self.accel.acceleration
-                    prediction = self.knn.knn(self.X_train,self.y_train,np.array([[x,y,z]]),3)
+                    x_gyro,y_gyro,z_gyro = self.accel.gyro
+                    prediction = self.knn.knn(self.X_train,self.y_train,np.concatenate((np.array([[x,y,z]]), np.array([[x_gyro,y_gyro,z_gyro]]))),3)  # type: ignore 
                     if prediction == 0:
-                        print("UP")
+                        horizontal_mov = simpleio.map_range(
+                            self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)
+                        vertical_mov = simpleio.map_range(
+                                self.mouse_steps(y), 20.0, 1.0, -15.0, 15.0)
+                            # scroll_dir = simpleio.map_range(
+                            #     vertical_mov, -15.0, 15.0, 3.0, -3.0)
+                        mouse.move(x=int(vertical_mov))
+                        mouse.move(y=int(horizontal_mov))
+                    elif prediction == 1:
+                            mouse.click(Mouse.LEFT_BUTTON)
+                            time.sleep(0.5)
+                            if (self.clock + 2) < time.monotonic():
+                                self.clock = time.monotonic()
                     else:
-                        print("DOWN")
-                    # swap horizontal ranges with vertical's when using in bracelet
-                    horizontal_mov = simpleio.map_range(
-                        self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)
-                    vertical_mov = simpleio.map_range(
-                        self.mouse_steps(y), 20.0, 1.0, -15.0, 15.0)
-                    scroll_dir = simpleio.map_range(
-                        vertical_mov, -15.0, 15.0, 3.0, -3.0)
-
-                    if self.prox.proximity > self.distance:
-                        mouse.move(wheel=int(scroll_dir))
-                    else:
-                        mouse.move(x=int(horizontal_mov))
-                        mouse.move(y=int(vertical_mov))
-
-                    if self.prox.proximity > 150:
-                        mouse.click(Mouse.LEFT_BUTTON)
-                        time.sleep(0.2)
-
+                        mouse.click(Mouse.RIGHT_BUTTON)
                         if (self.clock + 2) < time.monotonic():
-                            self.clock = time.monotonic()
-
+                                self.clock = time.monotonic()
                 if sensor_btn_cur_state != self.sensor_btn_last_touch_val:
                     if sensor_btn_cur_state:
                         self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value

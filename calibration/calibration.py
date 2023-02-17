@@ -8,9 +8,11 @@ from ml.knn import KNN
 import circuitpython_csv as csv
 import gc
 
+
 class Calibration:
     csv_helpers = CsvHelpers()
     knn = KNN()
+
     def __init__(self):
         self.i2c = board.I2C()
         self.accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
@@ -48,26 +50,36 @@ class Calibration:
 
     def calibration(self):
         filename = "movement_data.csv"
-        print("SIDE TO SIDE")
+        print("UP DOWN")
         with open(filename, mode="w", encoding="utf-8") as file:
             start_time = time.monotonic()
             writer = csv.writer(file)
             while (time.monotonic() - start_time) <= 5:
-                movement = self.accel.acceleration
-                writer.writerow(movement + (0,))
-                time.sleep(0.15)
-            print("UP AND DOWN")
+                accel_movement = self.accel.acceleration
+                gyro_movement = self.accel.gyro
+                writer.writerow(accel_movement + gyro_movement + (0,))
+                time.sleep(1)
+            print("SIDE TO SIDE")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                movement = self.accel.acceleration
-                writer.writerow(movement + (1,))
-                time.sleep(0.15)
-            # print("CLICK")
-            # start_time = time.monotonic()
-            # while (time.monotonic() - start_time) < 5:
-            #     movement = self.accel.acceleration
-            #     writer.writerow(movement + (2,))
-            #     time.sleep(0.1)
+                accel_movement = self.accel.acceleration
+                gyro_movement = self.accel.gyro
+                writer.writerow(accel_movement + gyro_movement + (0,))
+                time.sleep(1)
+            print("LEFT-CLICK MOVEMENT")
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) <= 5:
+                accel_movement = self.accel.acceleration
+                gyro_movement = self.accel.gyro
+                writer.writerow(accel_movement + gyro_movement + (1,))
+                time.sleep(1)
+            print("RIGHT-CLICK MOVEMENT")
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) <= 5:
+                accel_movement = self.accel.acceleration
+                gyro_movement = self.accel.gyro
+                writer.writerow(accel_movement + gyro_movement + (2,))
+                time.sleep(1)
         print("SAVING DATA")
         gc.collect()
         dataset = self.csv_helpers.create_dataset(filename)
@@ -75,7 +87,3 @@ class Calibration:
         gc.collect()
         self.csv_helpers.seperate_labels_and_data(dataset)
         print("DONE")
-
-
-
-      

@@ -31,8 +31,6 @@ class Pointer:
 
         self.prox = adafruit_apds9960.apds9960.APDS9960(self.i2c)
 
-        
-
         self.prox.enable_proximity = True
         self.calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
         self.calibrate_btn.direction = digitalio.Direction.INPUT
@@ -69,8 +67,8 @@ class Pointer:
 
         self.ble = adafruit_ble.BLERadio()
 
-    dataset = csv_helpers.create_dataset("movement_data.csv")
-    X_train,y_train = csv_helpers.seperate_labels_and_data(dataset)
+    X_train,y_train = csv_helpers.create_dataset("movement_data.csv")
+    print(X_train[0])
 
     def mouse_steps(self, axis):
         return round((axis - self.mouse_min) / self.step)
@@ -94,26 +92,23 @@ class Pointer:
 
                 if self.sensor_btn_toggle_value:
                     x,y,z = self.accel.acceleration
-                    x_gyro,y_gyro,z_gyro = self.accel.gyro
-                    prediction = self.knn.knn(self.X_train,self.y_train,np.concatenate((np.array([[x,y,z]]), np.array([[x_gyro,y_gyro,z_gyro]]))),3)  # type: ignore 
-                    if prediction == 0:
-                        horizontal_mov = simpleio.map_range(
-                            self.mouse_steps(x), 1.0, 20.0, -15.0, 15.0)
-                        vertical_mov = simpleio.map_range(
-                                self.mouse_steps(y), 20.0, 1.0, -15.0, 15.0)
+                    prediction = self.knn.knn(self.X_train,self.y_train,np.array([[x,y,z]]),3)  # type: ignore 
+                    # if prediction == 0
+                    horizontal_mov = round(z) * 2.5
+                    vertical_mov = round(x) * 2.5
                             # scroll_dir = simpleio.map_range(
                             #     vertical_mov, -15.0, 15.0, 3.0, -3.0)
-                        mouse.move(x=int(vertical_mov))
-                        mouse.move(y=int(horizontal_mov))
-                    elif prediction == 1:
-                            mouse.click(Mouse.LEFT_BUTTON)
-                            time.sleep(0.5)
-                            if (self.clock + 2) < time.monotonic():
-                                self.clock = time.monotonic()
-                    else:
-                        mouse.click(Mouse.RIGHT_BUTTON)
-                        if (self.clock + 2) < time.monotonic():
-                                self.clock = time.monotonic()
+                    mouse.move(x=int(-horizontal_mov))
+                    mouse.move(y=int(vertical_mov))
+                    # elif prediction == 1:
+                    #         mouse.click(Mouse.LEFT_BUTTON)
+                    #         time.sleep(0.5)
+                    #         if (self.clock + 2) < time.monotonic():
+                    #             self.clock = time.monotonic()
+                    # else:
+                    #     mouse.click(Mouse.RIGHT_BUTTON)
+                    #     if (self.clock + 2) < time.monotonic():
+                    #             self.clock = time.monotonic()
                 if sensor_btn_cur_state != self.sensor_btn_last_touch_val:
                     if sensor_btn_cur_state:
                         self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value

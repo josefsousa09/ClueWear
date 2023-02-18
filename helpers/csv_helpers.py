@@ -11,9 +11,9 @@ class CsvHelpers():
         data = []
         labels = []
         for row in dataset:
-            data.append([float(x) for x in row[:6]])
+            data.append([float(x) for x in row[:3]])
             time.sleep(0.2)
-            labels.append(int(row[6]))
+            labels.append(int(row[3]))
             time.sleep(0.5)
         return np.array(data), np.array(labels)
 
@@ -23,13 +23,15 @@ class CsvHelpers():
             writer.writerows(data)
 
     def create_dataset(self,filename):
-        dataset = []
+        data = []
+        labels = []
         with open(filename, mode="r") as file:
             reader = csv.reader(file)
             for line in reader:
-                dataset.append(line)
-                time.sleep(0.5)
-            return dataset
+                data.append([float(x) for x in line[:3]])
+                time.sleep(0.1)
+                labels.append(int(line[3]))
+            return np.array(data),np.array(labels)
 
     def save_calibration_data(self,filename, movement_data):
         self.write_to_file(filename, movement_data)

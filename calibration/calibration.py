@@ -55,35 +55,26 @@ class Calibration:
             start_time = time.monotonic()
             writer = csv.writer(file)
             while (time.monotonic() - start_time) <= 5:
-                accel_movement = self.accel.acceleration
-                gyro_movement = self.accel.gyro
-                writer.writerow(accel_movement + gyro_movement + (0,))
-                time.sleep(1)
+                writer.writerow(self.accel.acceleration + (0,))
+                time.sleep(0.1)
             print("SIDE TO SIDE")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                accel_movement = self.accel.acceleration
-                gyro_movement = self.accel.gyro
-                writer.writerow(accel_movement + gyro_movement + (0,))
-                time.sleep(1)
+                writer.writerow(self.accel.acceleration + (0,))
+                time.sleep(0.1)
             print("LEFT-CLICK MOVEMENT")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                accel_movement = self.accel.acceleration
-                gyro_movement = self.accel.gyro
-                writer.writerow(accel_movement + gyro_movement + (1,))
-                time.sleep(1)
+                writer.writerow(self.accel.acceleration + (1,))
+                time.sleep(0.1)
             print("RIGHT-CLICK MOVEMENT")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                accel_movement = self.accel.acceleration
-                gyro_movement = self.accel.gyro
-                writer.writerow(accel_movement + gyro_movement + (2,))
-                time.sleep(1)
+                writer.writerow(self.accel.acceleration + (2,))
+                time.sleep(0.1)
+                
         print("SAVING DATA")
         gc.collect()
-        dataset = self.csv_helpers.create_dataset(filename)
-        print("SEPERATING")
+        data, labels = self.csv_helpers.create_dataset(filename)
         gc.collect()
-        self.csv_helpers.seperate_labels_and_data(dataset)
         print("DONE")

@@ -1,7 +1,6 @@
 import time
 import board
 import digitalio
-import simpleio
 import adafruit_lsm6ds.lsm6ds33
 import adafruit_apds9960.apds9960
 from adafruit_hid.mouse import Mouse
@@ -11,17 +10,15 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
 from calibration.calibration import Calibration
-from helpers.csv_helpers import CsvHelpers
+from helpers.helpers import Helpers
 from ml.knn import KNN
 from ulab import numpy as np
-
-
 
 class Pointer:
 
     calibration = Calibration()
     knn = KNN()
-    csv_helpers = CsvHelpers()
+    helpers = Helpers()
 
     def __init__(self):
 
@@ -67,11 +64,7 @@ class Pointer:
 
         self.ble = adafruit_ble.BLERadio()
 
-    X_train,y_train = csv_helpers.create_dataset("movement_data.csv")
-    print(X_train[0])
-
-    def mouse_steps(self, axis):
-        return round((axis - self.mouse_min) / self.step)
+    X_train, y_train = helpers.create_dataset("movement_data.csv")
 
     def operate_mouse(self):
         if not self.ble.connected:
@@ -91,31 +84,30 @@ class Pointer:
                 calibrate_btn_cur_state = self.calibrate_btn.value
 
                 if self.sensor_btn_toggle_value:
-                    x,y,z = self.accel.acceleration
-                    prediction = self.knn.knn(self.X_train,self.y_train,np.array([[x,y,z]]),3)  # type: ignore 
-                    # if prediction == 0
-                    horizontal_mov = round(z) * 2.5
-                    vertical_mov = round(x) * 2.5
-                            # scroll_dir = simpleio.map_range(
-                            #     vertical_mov, -15.0, 15.0, 3.0, -3.0)
-                    mouse.move(x=int(-horizontal_mov))
-                    mouse.move(y=int(vertical_mov))
-                    # elif prediction == 1:
-                    #         mouse.click(Mouse.LEFT_BUTTON)
-                    #         time.sleep(0.5)
-                    #         if (self.clock + 2) < time.monotonic():
-                    #             self.clock = time.monotonic()
-                    # else:
-                    #     mouse.click(Mouse.RIGHT_BUTTON)
-                    #     if (self.clock + 2) < time.monotonic():
-                    #             self.clock = time.monotonic()
+                    x, y, z = self.accel.acceleration
+                    prediction = self.knn.knn(
+                        self.X_train, self.y_train, np.array([[x, y, z]]), 3)
+                    if prediction == 0:
+                        horizontal_mov = round(z) * 2.5
+                        vertical_mov = round(x) * 2.5
+                        mouse.move(x=int(-horizontal_mov))
+                        mouse.move(y=int(vertical_mov))
+                    elif prediction == 1:
+                        mouse.click(Mouse.LEFT_BUTTON)
+                        time.sleep(0.5)
+                        if (self.clock + 2) < time.monotonic():
+                            self.clock = time.monotonic()
+                    else:
+                        mouse.click(Mouse.RIGHT_BUTTON)
+                        if (self.clock + 2) < time.monotonic():
+                            self.clock = time.monotonic()
                 if sensor_btn_cur_state != self.sensor_btn_last_touch_val:
                     if sensor_btn_cur_state:
                         self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value
 
                 if calibrate_btn_cur_state != self.calibrate_btn_last_touch_val:
                     if not calibrate_btn_cur_state and not self.is_calibrating:
-                        print("CALIBRATE")
+                        print("Calibrating Mode")
                         self.is_calibrating = True
                         self.calibrate_btn.deinit()
                         self.sensor_btn.deinit()

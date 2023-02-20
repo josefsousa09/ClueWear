@@ -3,14 +3,14 @@ import board
 import digitalio
 import simpleio
 import adafruit_lsm6ds.lsm6ds33
-from helpers.csv_helpers import CsvHelpers
+from helpers.helpers import Helpers
 from ml.knn import KNN
 import circuitpython_csv as csv
 import gc
 
 
 class Calibration:
-    csv_helpers = CsvHelpers()
+    helpers = Helpers()
     knn = KNN()
 
     def __init__(self):
@@ -18,6 +18,32 @@ class Calibration:
         self.accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
 
     def calibrate(self):
+        filename = "movement_data.csv"
+        print("UP DOWN")
+        with open(filename, mode="w", encoding="utf-8") as file:
+            start_time = time.monotonic()
+            writer = csv.writer(file)
+            while (time.monotonic() - start_time) <= 5:
+                writer.writerow(self.accel.acceleration + (0,))
+                time.sleep(0.2)
+            print("SIDE TO SIDE")
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) <= 5:
+                writer.writerow(self.accel.acceleration + (0,))
+                time.sleep(0.2)
+            print("LEFT-CLICK MOVEMENT")
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) <= 5:
+                writer.writerow(self.accel.acceleration + (1,))
+                time.sleep(0.2)
+            print("RIGHT-CLICK MOVEMENT")
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) <= 5:
+                writer.writerow(self.accel.acceleration + (2,))
+                time.sleep(0.2)
+        print("DONE")
+
+    def calibration(self):
         calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
         calibrate_btn.direction = digitalio.Direction.INPUT
         calibrate_btn.pull = digitalio.Pull.UP
@@ -33,10 +59,9 @@ class Calibration:
         while True:
             calibrate_btn_curr_state = calibrate_btn.value
             cancel_calibration_btn_curr_state = cancel_calibration_btn.value
-
             if calibrate_btn_curr_state != calibrate_btn_last_touch_val:
                 if not calibrate_btn_curr_state:
-                    self.calibration()
+                    self.calibrate()
             if cancel_calibration_btn_curr_state != cancel_calibration_btn_last_touch_val:
                 if not cancel_calibration_btn_curr_state:
                     cancel_calibration_btn_toggle_val = not cancel_calibration_btn_toggle_val
@@ -48,33 +73,4 @@ class Calibration:
             cancel_calibration_btn_last_touch_val = cancel_calibration_btn_curr_state
             calibrate_btn_last_touch_val = calibrate_btn_curr_state
 
-    def calibration(self):
-        filename = "movement_data.csv"
-        print("UP DOWN")
-        with open(filename, mode="w", encoding="utf-8") as file:
-            start_time = time.monotonic()
-            writer = csv.writer(file)
-            while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (0,))
-                time.sleep(0.1)
-            print("SIDE TO SIDE")
-            start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (0,))
-                time.sleep(0.1)
-            print("LEFT-CLICK MOVEMENT")
-            start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (1,))
-                time.sleep(0.1)
-            print("RIGHT-CLICK MOVEMENT")
-            start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (2,))
-                time.sleep(0.1)
-                
-        print("SAVING DATA")
-        gc.collect()
-        data, labels = self.csv_helpers.create_dataset(filename)
-        gc.collect()
-        print("DONE")
+

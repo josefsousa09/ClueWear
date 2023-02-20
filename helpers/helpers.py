@@ -3,19 +3,9 @@ from ulab import numpy as np
 import time
 
 
-class CsvHelpers():
+class Helpers():
     def __init__(self) -> None:
         pass
-
-    def seperate_labels_and_data(self,dataset):
-        data = []
-        labels = []
-        for row in dataset:
-            data.append([float(x) for x in row[:3]])
-            time.sleep(0.2)
-            labels.append(int(row[3]))
-            time.sleep(0.5)
-        return np.array(data), np.array(labels)
 
     def write_to_file(self,filename, data):
         with open(filename, 'w', newline='') as file:

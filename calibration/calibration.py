@@ -18,7 +18,7 @@ class Calibration:
         self.accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
 
     def calibrate(self):
-        filename = "movement_data.csv"
+        filename = "profiles/profile_1_data.csv"
         print("UP DOWN")
         with open(filename, mode="w", encoding="utf-8") as file:
             start_time = time.monotonic()

@@ -13,8 +13,10 @@ from calibration.calibration import Calibration
 from helpers.helpers import Helpers
 from ml.knn import KNN
 from ulab import numpy as np
+from adafruit_ble.services import Service
+from adafruit_ble.uuid import VendorUUID
 
-class Pointer:
+class Pointer(Service):
 
     calibration = Calibration()
     knn = KNN()
@@ -51,22 +53,24 @@ class Pointer:
 
         self.is_calibrating = False
 
-        self.hid = HIDService()
+    hid = HIDService()
 
-        self.device_info = DeviceInfoService(
-            software_revision=adafruit_ble.__version__,
-            manufacturer="Adafruit")
+    device_info = DeviceInfoService(
+        software_revision=adafruit_ble.__version__,
+        manufacturer="Adafruit")
 
-        self.advertisement = ProvideServicesAdvertisement(self.hid)
-        self.advertisement.appearance = 961
-        self.scan_response = Advertisement()
-        self.scan_response.complete_name = "CP HID"
+    advertisement = ProvideServicesAdvertisement(hid)
+    advertisement.appearance = 961
+    scan_response = Advertisement()
+    scan_response.complete_name = "CP HID"
 
-        self.ble = adafruit_ble.BLERadio()
+    ble = adafruit_ble.BLERadio()
 
     X_train, y_train = helpers.create_dataset("movement_data.csv")
 
     def operate_mouse(self):
+        self.ble.start_advertising(self.advertisement)
+
         if not self.ble.connected:
             print("Ready to pair")
 
@@ -77,12 +81,12 @@ class Pointer:
         mouse = Mouse(self.hid.devices)
 
         while True:
+            
             while not self.ble.connected:
                 continue
             while self.ble.connected:
                 sensor_btn_cur_state = self.sensor_btn.value
                 calibrate_btn_cur_state = self.calibrate_btn.value
-
                 if self.sensor_btn_toggle_value:
                     x, y, z = self.accel.acceleration
                     prediction = self.knn.knn(
@@ -127,4 +131,3 @@ class Pointer:
 
                 self.calibrate_btn_last_touch_val = calibrate_btn_cur_state
                 self.sensor_btn_last_touch_val = sensor_btn_cur_state
-            self.ble.start_advertising(self.advertisement)

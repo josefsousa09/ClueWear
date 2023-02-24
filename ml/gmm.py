@@ -28,7 +28,7 @@ class GMM():
             x_total += point[0]
             z_total += point[1]
 
-        return (x_total/n, z_total)
+        return (x_total/n, z_total/n)
 
     def cov_matrix(self, X, expected):
 

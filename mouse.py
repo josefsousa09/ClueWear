@@ -12,6 +12,7 @@ from adafruit_ble.services.standard.device_info import DeviceInfoService
 from calibration.calibration import Calibration
 from helpers.helpers import Helpers
 from ml.knn import KNN
+from ml.gmm import GMM
 from ulab import numpy as np
 from adafruit_ble.services import Service
 from adafruit_ble.uuid import VendorUUID
@@ -20,6 +21,7 @@ class Pointer(Service):
 
     calibration = Calibration()
     knn = KNN()
+    gmm = GMM()
     helpers = Helpers()
 
     def __init__(self):
@@ -66,7 +68,7 @@ class Pointer(Service):
 
     ble = adafruit_ble.BLERadio()
 
-    X_train, y_train = helpers.create_dataset("movement_data.csv")
+    gmm.train()
 
     def operate_mouse(self):
         self.ble.start_advertising(self.advertisement)
@@ -89,8 +91,7 @@ class Pointer(Service):
                 calibrate_btn_cur_state = self.calibrate_btn.value
                 if self.sensor_btn_toggle_value:
                     x, y, z = self.accel.acceleration
-                    prediction = self.knn.knn(
-                        self.X_train, self.y_train, np.array([[x, y, z]]), 3)
+                    prediction, prob = self.gmm.pdf_classifier([x,z])
                     if prediction == 0:
                         horizontal_mov = round(z) * 2.5
                         vertical_mov = round(x) * 2.5
@@ -105,6 +106,7 @@ class Pointer(Service):
                         mouse.click(Mouse.RIGHT_BUTTON)
                         if (self.clock + 2) < time.monotonic():
                             self.clock = time.monotonic()
+                            time.sleep(0.5)
                 if sensor_btn_cur_state != self.sensor_btn_last_touch_val:
                     if sensor_btn_cur_state:
                         self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value

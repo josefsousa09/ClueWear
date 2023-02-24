@@ -19,29 +19,42 @@ class Calibration:
 
     def calibrate(self):
         filename = "profiles/profile_1_data.csv"
+        print("NEXT ONE IN 5 SECONDS")
+        time.sleep(5)
         print("UP DOWN")
         with open(filename, mode="w", encoding="utf-8") as file:
             start_time = time.monotonic()
             writer = csv.writer(file)
             while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (0,))
-                time.sleep(0.2)
+                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
+                writer.writerow([x,z,0])
+                time.sleep(0.1)
+            print("NEXT ONE IN 5 SECONDS")
+            time.sleep(5)
             print("SIDE TO SIDE")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (0,))
-                time.sleep(0.2)
+                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
+                writer.writerow([x,z,0])
+                time.sleep(0.1)
+            print("NEXT ONE IN 5 SECONDS")
+            time.sleep(5)
             print("LEFT-CLICK MOVEMENT")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (1,))
-                time.sleep(0.2)
+                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
+                writer.writerow([x,z,1])
+                time.sleep(0.1)
+            print("NEXT ONE IN 5 SECONDS")
+            time.sleep(5)
             print("RIGHT-CLICK MOVEMENT")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                writer.writerow(self.accel.acceleration + (2,))
-                time.sleep(0.2)
+                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
+                writer.writerow([x,z,2])
+                time.sleep(0.1)
         print("DONE")
+        
 
     def calibration(self):
         calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)

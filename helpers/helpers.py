@@ -23,9 +23,17 @@ class Helpers():
                 labels.append(int(line[3]))
             return np.array(data),np.array(labels)
 
+    def organise_data(self,filename):
+        data = {}
+        with open(filename, mode="r") as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[2] in data:
+                    data[row[2]].append([float(row[0]), float(row[1])])
+                else:
+                    data[row[2]] = []
+                    data[row[2]].append([float(row[0]), float(row[1])])
+            return data
+
     def save_calibration_data(self,filename, movement_data):
         self.write_to_file(filename, movement_data)
-
-    def chunked_X_train_generator(self,X_train):
-        return np.array(X_train)
-        

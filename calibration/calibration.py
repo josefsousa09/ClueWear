@@ -1,6 +1,7 @@
 import time
 import board
 import digitalio
+from ml.gmm import GMM
 import simpleio
 import adafruit_lsm6ds.lsm6ds33
 from helpers.helpers import Helpers
@@ -12,6 +13,7 @@ import gc
 class Calibration:
     helpers = Helpers()
     knn = KNN()
+    gmm = GMM()
 
     def __init__(self):
         self.i2c = board.I2C()
@@ -26,33 +28,35 @@ class Calibration:
             start_time = time.monotonic()
             writer = csv.writer(file)
             while (time.monotonic() - start_time) <= 5:
-                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
-                writer.writerow([x,z,0])
+                x,y,z = self.accel.acceleration
+                writer.writerow([x,y,z,"general_mov"])
                 time.sleep(0.1)
             print("NEXT ONE IN 5 SECONDS")
             time.sleep(5)
             print("SIDE TO SIDE")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
-                writer.writerow([x,z,0])
+                x,y,z = self.accel.acceleration
+                writer.writerow([x,y,z,"general_mov"])
                 time.sleep(0.1)
             print("NEXT ONE IN 5 SECONDS")
             time.sleep(5)
             print("LEFT-CLICK MOVEMENT")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
-                writer.writerow([x,z,1])
+                x,y,z = self.accel.acceleration
+                writer.writerow([x,y,z,"left_click"])
                 time.sleep(0.1)
             print("NEXT ONE IN 5 SECONDS")
             time.sleep(5)
             print("RIGHT-CLICK MOVEMENT")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                x,z = self.accel.acceleration[0],self.accel.acceleration[2]
-                writer.writerow([x,z,2])
+                x,y,z = self.accel.acceleration
+                writer.writerow([x,y,z,"right_click"])
                 time.sleep(0.1)
+            file.close()
+        self.gmm.train()
         print("DONE")
         
 

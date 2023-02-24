@@ -67,8 +67,9 @@ class Pointer(Service):
     scan_response.complete_name = "CP HID"
 
     ble = adafruit_ble.BLERadio()
-
-    gmm.train()
+    
+    if helpers.dataset_empty("profiles/profile_1_data.csv") == False:
+        gmm.train()
 
     def operate_mouse(self):
         self.ble.start_advertising(self.advertisement)
@@ -91,18 +92,18 @@ class Pointer(Service):
                 calibrate_btn_cur_state = self.calibrate_btn.value
                 if self.sensor_btn_toggle_value:
                     x, y, z = self.accel.acceleration
-                    prediction, prob = self.gmm.pdf_classifier([x,z])
-                    if prediction == 0:
-                        horizontal_mov = round(z) * 2.5
-                        vertical_mov = round(x) * 2.5
-                        mouse.move(x=int(-horizontal_mov))
+                    prediction, prob = self.gmm.pdf_classifier([x,y,z])
+                    if prediction == "general_mov":
+                        horizontal_mov = round(x)
+                        vertical_mov = round(y)
+                        mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
-                    elif prediction == 1:
+                    elif prediction == "left_click":
                         mouse.click(Mouse.LEFT_BUTTON)
                         time.sleep(0.5)
                         if (self.clock + 2) < time.monotonic():
                             self.clock = time.monotonic()
-                    else:
+                    elif prediction == "right_click":
                         mouse.click(Mouse.RIGHT_BUTTON)
                         if (self.clock + 2) < time.monotonic():
                             self.clock = time.monotonic()

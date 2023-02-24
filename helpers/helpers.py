@@ -28,12 +28,20 @@ class Helpers():
         with open(filename, mode="r") as file:
             reader = csv.reader(file)
             for row in reader:
-                if row[2] in data:
-                    data[row[2]].append([float(row[0]), float(row[1])])
+                if row[3] in data:
+                    data[row[3]].append([float(row[0]), float(row[1]), float(row[2])])
                 else:
-                    data[row[2]] = []
-                    data[row[2]].append([float(row[0]), float(row[1])])
+                    data[row[3]] = []
+                    data[row[3]].append([float(row[0]), float(row[1]), float(row[2])])
             return data
+        
+    def dataset_empty(self,filename):
+        with open(filename,mode="r") as file:
+            reader = csv.reader(file)
+            if not any(reader):
+                return True
+            else:
+                return False
 
     def save_calibration_data(self,filename, movement_data):
         self.write_to_file(filename, movement_data)

@@ -27,11 +27,7 @@ class GMM():
             y_total += point[1]
             z_total += point[2]
 
-<<<<<<< HEAD
         return (x_total/n, y_total/n, z_total/n)
-=======
-        return (x_total/n, z_total/n)
->>>>>>> e5e0b0c24b92c65043d90e5f725fbd1b232197a8
 
     def cov_matrix(self, X, expected):
         X1 = [point[0] for point in X]
@@ -79,7 +75,7 @@ class GMM():
             diff = np.array([x[i] - E[i] for i in range(3)])
             inv = self.gauss_jordan_elimination(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
-            tmp = -0.5 * np.dot(np.dot(diff, inv), diff)
+            tmp = self.matrix_mult(diff,inv)
             pdf = (1 / (2 * 3.14**1.5 * det**0.5)) * 2.718 **tmp 
 
             if pdf > mPdf:
@@ -90,6 +86,15 @@ class GMM():
 
     def determinant(self, M):
         return M[0][0] * (M[1][1]*M[2][2] - M[1][2]*M[2][1]) - M[0][1] * (M[1][0]*M[2][2] - M[1][2]*M[2][0]) + M[0][2] * (M[1][0]*M[2][1] - M[1][1]*M[2][0])
+
+    def matrix_mult(self,diff,inv):
+        tmp = 0
+        for i in range(3):
+            for j in range(3):
+                tmp += diff[i] * inv[i][j] * diff[j]
+        tmp *= -0.5
+        return tmp
+        
 
     def gauss_jordan_elimination(self, M):
     # Create an identity matrix of the same size as M

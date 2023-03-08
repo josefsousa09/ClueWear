@@ -28,11 +28,11 @@ class Helpers():
         with open(filename, mode="r") as file:
             reader = csv.reader(file)
             for row in reader:
-                if row[3] in data:
-                    data[row[3]].append([float(row[0]), float(row[1]), float(row[2])])
+                label = row[3]
+                if label in data:
+                    data[label].append([float(row[0]), float(row[1]), float(row[2])])
                 else:
-                    data[row[3]] = []
-                    data[row[3]].append([float(row[0]), float(row[1]), float(row[2])])
+                    data[label] = [[float(row[0]), float(row[1]), float(row[2])]]
             return data
         
     def dataset_empty(self,filename):

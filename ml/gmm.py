@@ -76,13 +76,13 @@ class GMM():
             inv = self.gauss_jordan_elimination(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
             tmp = self.matrix_mult(diff,inv)
-            pdf = (1 / (2 * 3.14**1.5 * det**0.5)) * 2.718 **tmp 
+            pdf = (1 / (2* 3.14 * det**0.5)) * 2.718 **tmp
 
             if pdf > mPdf:
                 mPdf = pdf
                 mGesture = gesture
-
-        return mGesture, mPdf
+            
+        return mGesture
 
     def determinant(self, M):
         return M[0][0] * (M[1][1]*M[2][2] - M[1][2]*M[2][1]) - M[0][1] * (M[1][0]*M[2][2] - M[1][2]*M[2][0]) + M[0][2] * (M[1][0]*M[2][1] - M[1][1]*M[2][0])

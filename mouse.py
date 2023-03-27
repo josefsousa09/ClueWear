@@ -16,7 +16,6 @@ from display_manager import DisplayManager
 
 class Pointer:
 
-
     def __init__(self):
 
         self.gmm = GMM()
@@ -27,7 +26,7 @@ class Pointer:
 
         self.i2c = board.I2C()
 
-        self.accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
+        self.sensor = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
 
         self.sensor_btn = digitalio.DigitalInOut(board.BUTTON_A)
         self.sensor_btn.direction = digitalio.Direction.INPUT
@@ -75,8 +74,8 @@ class Pointer:
                 sensor_btn_cur_state = self.sensor_btn.value
                 calibrate_btn_cur_state = self.calibrate_btn.value
                 if self.sensor_btn_toggle_value:
-                    x, y, z = self.accel.acceleration
-                    prediction, prob = self.gmm.pdf_classifier([x, y, z])
+                    x, y, z = self.sensor.acceleration
+                    prediction = self.gmm.pdf_classifier([x,y,z])
                     if prediction == "general_mov":
                         horizontal_mov = round(x)
                         vertical_mov = round(y)

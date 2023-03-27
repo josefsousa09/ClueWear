@@ -19,9 +19,8 @@ class Calibration:
     def __init__(self,display_manager):
         self.display_manager = display_manager
         self.i2c = board.I2C()
-        self.accel = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
+        self.sensor = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
 
-        
     def calibrate(self):
         filename = "profiles/profile_1_data.csv"
         for i in range(5, 0 ,-1):
@@ -32,7 +31,7 @@ class Calibration:
             start_time = time.monotonic()
             writer = csv.writer(file)
             while (time.monotonic() - start_time) <= 5:
-                x,y,z = self.accel.acceleration
+                x, y, z = self.sensor.acceleration
                 writer.writerow([x,y,z,"general_mov"])
                 time.sleep(0.1)
             for i in range(5, 0 , -1):
@@ -41,7 +40,7 @@ class Calibration:
             self.display_manager.calibration_screen("MOV. SIDE TO SIDE","")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                x,y,z = self.accel.acceleration
+                x, y, z = self.sensor.acceleration
                 writer.writerow([x,y,z,"general_mov"])
                 time.sleep(0.1)
             for i in range(5, 0 , -1):
@@ -50,7 +49,7 @@ class Calibration:
             self.display_manager.calibration_screen("DO L.CLICK MOV.","")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                x,y,z = self.accel.acceleration
+                x, y, z = self.sensor.acceleration
                 writer.writerow([x,y,z,"left_click"])
                 time.sleep(0.1)
             for i in range(5, 0 , -1):
@@ -59,7 +58,7 @@ class Calibration:
             self.display_manager.calibration_screen("DO R.CLICK MOV.","")
             start_time = time.monotonic()
             while (time.monotonic() - start_time) <= 5:
-                x,y,z = self.accel.acceleration
+                x, y, z = self.sensor.acceleration
                 writer.writerow([x,y,z,"right_click"])
                 time.sleep(0.1)
             file.close()
@@ -67,7 +66,6 @@ class Calibration:
         self.display_manager.calibration_screen("CALIBRATION COMPLETE","")
         time.sleep(3)
 
-        
 
     def calibration(self):
         self.display_manager.calibration_menu_screen()

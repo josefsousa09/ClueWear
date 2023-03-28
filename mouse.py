@@ -83,8 +83,8 @@ class Pointer:
                     x, y, z = self.sensor.acceleration
                     prediction = self.gmm.pdf_classifier([x,y,z])
                     if prediction == "general_mov":
-                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted else round(x) * horizontal_sensitivity
-                        vertical_mov = round(-y) * vertical_inverted if vertical_inverted else round(y) * vertical_sensitivity
+                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted == True else round(x) * horizontal_sensitivity
+                        vertical_mov = round(-y) * vertical_inverted if vertical_inverted == True else round(y) * vertical_sensitivity
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
                     elif prediction == "left_click":

@@ -9,20 +9,18 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
 from calibration.calibration import Calibration
-from helpers.helpers import Helpers
 from ml.gmm import GMM
 from display_manager import DisplayManager
+from settings import Settings
+from helpers.helpers import Helpers
 
 
 class Pointer:
-
+    helpers = Helpers()
     def __init__(self):
 
         self.gmm = GMM()
-        self.helpers = Helpers()
         self.display_manager = DisplayManager()
-
-        self.calibration = Calibration(self.display_manager)
 
         self.i2c = board.I2C()
 
@@ -31,25 +29,17 @@ class Pointer:
         self.sensor_btn = digitalio.DigitalInOut(board.BUTTON_A)
         self.sensor_btn.direction = digitalio.Direction.INPUT
         self.sensor_btn.pull = digitalio.Pull.UP
-        self.sensor_btn_last_touch_val = False
-        self.sensor_btn_toggle_value = False
-        self.tracking_status = False
+        self.sensor_btn_last_touch_val = True
+        self.sensor_btn_toggle_value = True
 
         self.calibrate_btn = digitalio.DigitalInOut(board.BUTTON_B)
         self.calibrate_btn.direction = digitalio.Direction.INPUT
         self.calibrate_btn.pull = digitalio.Pull.UP
-        self.calibrate_btn_last_touch_val = False
-        self.calibrate_btn_toggle_value = False
+        self.calibrate_btn_last_touch_val = True
 
-        self.mouse_min = -9
-        self.mouse_max = 9
-        self.step = (self.mouse_max - self.mouse_min) / 20.0
+        self.config_settings = self.helpers.read_config_file()
 
         self.clock = 0
-
-        self.distance = 245
-
-        self.is_calibrating = False
 
     hid = HIDService()
 
@@ -64,11 +54,27 @@ class Pointer:
 
     ble = adafruit_ble.BLERadio()
 
+    def sensitivity_conversion(self,value):
+        if value == 1:
+            return 0.25
+        elif value == 2:
+            return 0.5
+        elif value == 3:
+            return 1
+        elif value == 4:
+            return 1.25
+        elif value == 5:
+            return 1.5
+
     def operate_mouse(self):
         self.gmm.train()
         self.display_manager.ready_to_pair_screen()
         self.ble.start_advertising(self.advertisement)
         mouse = Mouse(self.hid.devices)
+        vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
+        horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
+        vertical_inverted = self.config_settings['VERT.SENSITIVITY']
+        horizontal_inverted = self.config_settings['HORIZ.SENSITIVITY']
         while True:
             if self.ble.connected:
                 sensor_btn_cur_state = self.sensor_btn.value
@@ -77,8 +83,8 @@ class Pointer:
                     x, y, z = self.sensor.acceleration
                     prediction = self.gmm.pdf_classifier([x,y,z])
                     if prediction == "general_mov":
-                        horizontal_mov = round(x)
-                        vertical_mov = round(y)
+                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted else round(x) * horizontal_sensitivity
+                        vertical_mov = round(-y) * vertical_inverted if vertical_inverted else round(y) * vertical_sensitivity
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
                     elif prediction == "left_click":
@@ -91,16 +97,19 @@ class Pointer:
                         if (self.clock + 2) < time.monotonic():
                             self.clock = time.monotonic()
                             time.sleep(0.5)
-                if sensor_btn_cur_state != self.sensor_btn_last_touch_val:
-                    if sensor_btn_cur_state:
-                        self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value
-                        self.tracking_status = not self.tracking_status
-                if calibrate_btn_cur_state != self.calibrate_btn_last_touch_val:
-                    if not calibrate_btn_cur_state and not self.is_calibrating:
-                        self.is_calibrating = True
+                if sensor_btn_cur_state != self.sensor_btn_last_touch_val and calibrate_btn_cur_state != self.calibrate_btn_last_touch_val:
+                    time.sleep(0.5)
+                    if not sensor_btn_cur_state or not calibrate_btn_cur_state:
                         self.calibrate_btn.deinit()
                         self.sensor_btn.deinit()
-                        self.calibration.calibration()
+                        settings = Settings(self.display_manager)
+                        settings.settings_menu()
+                        del settings
+                        self.config_settings = self.helpers.read_config_file()
+                        vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
+                        horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
+                        vertical_inverted = self.config_settings['VERT.SENSITIVITY']
+                        horizontal_inverted = self.config_settings['HORIZ.SENSITIVITY']
                         self.calibrate_btn = digitalio.DigitalInOut(
                             board.BUTTON_B)
                         self.calibrate_btn.direction = digitalio.Direction.INPUT
@@ -109,11 +118,29 @@ class Pointer:
                             board.BUTTON_A)
                         self.sensor_btn.direction = digitalio.Direction.INPUT
                         self.sensor_btn.pull = digitalio.Pull.UP
-                        self.is_calibrating = False
+                        time.sleep(1)
+                elif sensor_btn_cur_state != self.sensor_btn_last_touch_val and calibrate_btn_cur_state == self.calibrate_btn_last_touch_val:
+                    if not sensor_btn_cur_state:
+                        self.sensor_btn_toggle_value = not self.sensor_btn_toggle_value
+                elif calibrate_btn_cur_state != self.calibrate_btn_last_touch_val and sensor_btn_cur_state == self.sensor_btn_last_touch_val:
+                    if not calibrate_btn_cur_state:
+                        self.calibrate_btn.deinit()
+                        self.sensor_btn.deinit()
+                        calibration = Calibration(self.display_manager)
+                        calibration.calibration()
+                        del calibration
+                        self.calibrate_btn = digitalio.DigitalInOut(
+                            board.BUTTON_B)
+                        self.calibrate_btn.direction = digitalio.Direction.INPUT
+                        self.calibrate_btn.pull = digitalio.Pull.UP
+                        self.sensor_btn = digitalio.DigitalInOut(
+                            board.BUTTON_A)
+                        self.sensor_btn.direction = digitalio.Direction.INPUT
+                        self.sensor_btn.pull = digitalio.Pull.UP
 
                 self.calibrate_btn_last_touch_val = calibrate_btn_cur_state
                 self.sensor_btn_last_touch_val = sensor_btn_cur_state
-                self.display_manager.tracking_screen(self.tracking_status)
+                self.display_manager.tracking_screen(self.sensor_btn_toggle_value)
             else:
                 if not self.ble.advertising:
                     self.ble.start_advertising(self.advertisement)

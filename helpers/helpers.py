@@ -2,7 +2,6 @@ import circuitpython_csv as csv
 from ulab import numpy as np
 import time
 
-
 class Helpers():
     def __init__(self) -> None:
         pass
@@ -25,7 +24,7 @@ class Helpers():
 
     def organise_data(self,filename):
         data = {}
-        with open(filename, mode="r") as file:
+        with open(filename, mode='r') as file:
             reader = csv.reader(file)
             for row in reader:
                 label = row[3]
@@ -36,12 +35,44 @@ class Helpers():
             return data
         
     def dataset_empty(self,filename):
-        with open(filename,mode="r") as file:
+        with open(filename,mode='r') as file:
             reader = csv.reader(file)
             if not any(reader):
                 return True
             else:
                 return False
 
-    def save_calibration_data(self,filename, movement_data):
-        self.write_to_file(filename, movement_data)
+    def read_config_file(self):
+        config = {}
+        with open("config.txt",mode='r') as file:
+            for line in file:
+                if line.strip():
+                    name, value = line.strip().split('=')
+                    if value.isdigit():
+                        value = int(value)
+                    elif value.lower() == 'on':
+                        value = True
+                    elif value.lower() == 'off':
+                        value = False
+                    config[name] = value
+        return config
+    
+    def update_config_file(self,config_dict):
+        with open("config.txt", mode='r') as file:
+            lines = file.readlines()
+        updated_lines = []
+        for line in lines:
+            if line.strip():
+                name, value = line.strip().split('=')
+                if name in config_dict:
+                    new_value = config_dict[name]
+                    if isinstance(new_value,bool):
+                        value = 'ON' if new_value else 'OFF'
+                    else:
+                        value = str(new_value)
+                    line = f"{name}={value}\n"
+            updated_lines.append(line)
+
+        with open("config.txt", 'w') as file:
+            for i in updated_lines:
+                file.write(i)

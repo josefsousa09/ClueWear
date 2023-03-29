@@ -30,35 +30,16 @@ class Calibration:
 
     def calibrate(self):
         filename = "profiles/profile_1_data.csv"
-        for i in range(5, 0, -1):
-            self.display_manager.calibration_screen(
-                "VERT. BEGINS IN", str(i) + " seconds")
-            time.sleep(1)
-        self.display_manager.calibration_screen("DO VERT. MOV.", "")
         with open(filename, mode="w", encoding="utf-8") as file:
             start_time = time.monotonic()
             writer = csv.writer(file)
-            while (time.monotonic() - start_time) <= 5:
-                x, y, z = self.sensor.acceleration
-                writer.writerow([x, y, z, "general_mov"])
-                time.sleep(0.1)
-            for i in range(5, 0, -1):
-                self.display_manager.calibration_screen(
-                    "HORIZ. BEGINS IN", str(i) + " seconds")
-                time.sleep(1)
-            self.display_manager.calibration_screen("DO HORIZ. MOV.", "")
-            start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 5:
-                x, y, z = self.sensor.acceleration
-                writer.writerow([x, y, z, "general_mov"])
-                time.sleep(0.1)
             for i in range(5, 0, -1):
                 self.display_manager.calibration_screen(
                     "L.CLICK BEGINS IN", str(i) + " seconds")
                 time.sleep(1)
             self.display_manager.calibration_screen("DO L.CLICK MOV.", "")
             start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 5:
+            while (time.monotonic() - start_time) <= 10:
                 x, y, z = self.sensor.acceleration
                 writer.writerow([x, y, z, "left_click"])
                 time.sleep(0.1)
@@ -68,7 +49,7 @@ class Calibration:
                 time.sleep(1)
             self.display_manager.calibration_screen("DO R.CLICK MOV.", "")
             start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 5:
+            while (time.monotonic() - start_time) <= 10:
                 x, y, z = self.sensor.acceleration
                 writer.writerow([x, y, z, "right_click"])
                 time.sleep(0.1)

@@ -59,8 +59,6 @@ class Settings:
                 if not a_btn_curr_state:  
                     self.edit_setting(curr_setting_name)
                     self.display_manager.view_setting(curr_setting_name, str(self.curr_config[curr_setting_name]) + "/5" if str(self.curr_config[curr_setting_name]).isdigit() else self.bool_change(self.curr_config[curr_setting_name]))
-
-
             if b_btn_curr_state != self.b_btn_last_touch_val:
                 if not b_btn_curr_state:
                     curr_setting_name = self.next_setting(curr_setting_name)
@@ -104,10 +102,7 @@ class Settings:
                             temp = str(num)
                     elif temp == False:
                         temp = True
-
                     self.display_manager.edit_setting(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
-
-
             self.a_btn_last_touch_val = a_btn_curr_state
             self.b_btn_last_touch_val = b_btn_curr_state
 

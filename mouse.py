@@ -73,18 +73,18 @@ class Pointer:
         mouse = Mouse(self.hid.devices)
         vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
         horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
-        vertical_inverted = self.config_settings['VERT.SENSITIVITY']
-        horizontal_inverted = self.config_settings['HORIZ.SENSITIVITY']
+        vertical_inverted = self.config_settings['VERT.INVERTED']
+        horizontal_inverted = self.config_settings['HORIZ.INVERTED']
         while True:
             if self.ble.connected:
                 sensor_btn_cur_state = self.sensor_btn.value
                 calibrate_btn_cur_state = self.calibrate_btn.value
                 if self.sensor_btn_toggle_value:
                     x, y, z = self.sensor.acceleration
-                    prediction = self.gmm.pdf_classifier([x,y,z])
-                    if prediction == "general_mov":
-                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted == True else round(x) * horizontal_sensitivity
-                        vertical_mov = round(-y) * vertical_inverted if vertical_inverted == True else round(y) * vertical_sensitivity
+                    prediction,m = self.gmm.pdf_classifier([x,y,z])
+                    if prediction == "?":
+                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted == True else round(x) * horizontal_sensitivity 
+                        vertical_mov = round(-y) * vertical_inverted if vertical_inverted == True else round(y) * vertical_sensitivity 
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
                     elif prediction == "left_click":
@@ -108,8 +108,8 @@ class Pointer:
                         self.config_settings = self.helpers.read_config_file()
                         vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
                         horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
-                        vertical_inverted = self.config_settings['VERT.SENSITIVITY']
-                        horizontal_inverted = self.config_settings['HORIZ.SENSITIVITY']
+                        vertical_inverted = self.config_settings['VERT.INVERTED']
+                        horizontal_inverted = self.config_settings['HORIZ.INVERTED']
                         self.calibrate_btn = digitalio.DigitalInOut(
                             board.BUTTON_B)
                         self.calibrate_btn.direction = digitalio.Direction.INPUT
@@ -140,6 +140,7 @@ class Pointer:
 
                 self.calibrate_btn_last_touch_val = calibrate_btn_cur_state
                 self.sensor_btn_last_touch_val = sensor_btn_cur_state
+                print("yes")
                 self.display_manager.tracking_screen(self.sensor_btn_toggle_value)
             else:
                 if not self.ble.advertising:

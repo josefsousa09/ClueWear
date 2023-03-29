@@ -6,6 +6,7 @@ class GMM():
         self.helpers = Helpers()
         self.expected = {}
         self.cov = {}
+        self.thres = 0.01
 
     def train(self):
         data = self.helpers.organise_data("profiles/profile_1_data.csv")
@@ -73,61 +74,39 @@ class GMM():
         
         for gesture, E in self.expected.items():
             diff = np.array([x[i] - E[i] for i in range(3)])
-            inv = self.gauss_jordan_elimination(self.cov[gesture])
+            # cov_regularized = self.cov[gesture] + 0.01*np.eye(3)
+            inv = self.inverse(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
-            tmp = self.matrix_mult(diff,inv)
-            pdf = (1 / (2* 3.14 * det**0.5)) * 2.718 **tmp
+            tmp = -0.5 * self.matrix_mult(diff,inv)
+            pdf = (1 / ((2 * 3.14) ** 1.5 * det ** 0.5)) * 2.718 ** tmp
 
             if pdf > mPdf:
                 mPdf = pdf
-                mGesture = gesture
+                if mPdf > self.thres:
+                    mGesture = gesture
             
-        return mGesture
+        return mGesture, mPdf
 
     def determinant(self, M):
-        return M[0][0] * (M[1][1]*M[2][2] - M[1][2]*M[2][1]) - M[0][1] * (M[1][0]*M[2][2] - M[1][2]*M[2][0]) + M[0][2] * (M[1][0]*M[2][1] - M[1][1]*M[2][0])
+        det = (M[0][0]*((M[1][1]*M[2][2])-(M[2][1]*M[1][2]))) - (M[0][1]*((M[1][0]*M[2][2])-(M[2][0]*M[1][2]))) + (M[0][2]*((M[1][0]*M[2][1])-(M[2][0]*M[1][1])))
+        return (M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) -
+                M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) +
+                M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]))
+    
+    def matrix_mult(self, M1, M2):
+        tmp = [M1[0]*M2[0][0] + M1[1]*M2[1][0] + M1[2]*M2[2][0],
+           M1[0]*M2[0][1] + M1[1]*M2[1][1] + M1[2]*M2[2][1],
+           M1[0]*M2[0][2] + M1[1]*M2[1][2] + M1[2]*M2[2][2]]
+        return tmp[0]*M1[0] + tmp[1]*M1[1] + tmp[2]*M1[2]
 
-    def matrix_mult(self,diff,inv):
-        tmp = 0
-        for i in range(3):
-            for j in range(3):
-                tmp += diff[i] * inv[i][j] * diff[j]
-        tmp *= -0.5
-        return tmp
         
 
-    def gauss_jordan_elimination(self, M):
-    # Create an identity matrix of the same size as M
-        identity = np.eye(len(M))
-
-        # Combine M with the identity matrix
-        augmented = np.zeros((len(M), 2 * len(M)))
-        augmented[:, :len(M)] = M
-        augmented[:, len(M):] = identity
-
-        # Perform Gauss-Jordan elimination to transform M into the identity matrix
-        for i in range(len(M)):
-            # Swap rows if necessary to get a nonzero diagonal element
-            if augmented[i][i] == 0:
-                for j in range(i + 1, len(M)):
-                    if augmented[j][i] != 0:
-                        augmented[i], augmented[j] = augmented[j], augmented[i]
-                        break
-                    
-            # Scale the row to make the diagonal element equal to 1
-            diagonal_element = augmented[i][i]
-            augmented[i] = augmented[i] / diagonal_element
-
-            # Subtract a multiple of the row from other rows to make their elements zero
-            for j in range(len(M)):
-                if j != i:
-                    factor = augmented[j][i] / augmented[i][i]
-                    augmented[j] = augmented[j] - factor * augmented[i]
-
-        # The right half of the augmented matrix is now the inverse of M
-        inverse = augmented[:, len(M):]
-
-        return inverse
+    def inverse(self, M):
+        det = self.determinant(M)
+        inv = [[(M[1][1]*M[2][2]-M[2][1]*M[1][2])/det, -(M[0][1]*M[2][2]-M[2][1]*M[0][2])/det, (M[0][1]*M[1][2]-M[1][1]*M[0][2])/det],
+            [-(M[1][0]*M[2][2]-M[2][0]*M[1][2])/det, (M[0][0]*M[2][2]-M[2][0]*M[0][2])/det, -(M[0][0]*M[1][2]-M[1][0]*M[0][2])/det],
+            [(M[1][0]*M[2][1]-M[2][0]*M[1][1])/det, -(M[0][0]*M[2][1]-M[2][0]*M[0][1])/det, (M[0][0]*M[1][1]-M[1][0]*M[0][1])/det]]
+        return inv
 
     
     

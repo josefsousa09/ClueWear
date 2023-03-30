@@ -37,7 +37,7 @@ class Helpers():
     def dataset_empty(self,filename):
         with open(filename,mode='r') as file:
             reader = csv.reader(file)
-            if not any(reader):
+            if sum(1 for row in reader) == 0:
                 return True
             else:
                 return False

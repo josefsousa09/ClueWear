@@ -1,15 +1,12 @@
+
 from ulab import numpy as np
-from helpers.helpers import Helpers
 
 class GMM():
-    def __init__(self) -> None:
-        self.helpers = Helpers()
+    def __init__(self):
         self.expected = {}
         self.cov = {}
-        self.thres = 0.01
 
-    def train(self):
-        data = self.helpers.organise_data("profiles/profile_1_data.csv")
+    def train(self,data):
         for gesture, X in data.items():
             self.expected[gesture] = self.avg(X)
             self.cov[gesture] = self.cov_matrix(X, self.expected[gesture])
@@ -68,13 +65,12 @@ class GMM():
 
         return total / (n - 1)
 
-    def pdf_classifier(self, x):
+    def pdf_classifier(self, x, threshold=0.0):
         mPdf = -1
         mGesture = '?'
         
         for gesture, E in self.expected.items():
             diff = np.array([x[i] - E[i] for i in range(3)])
-            # cov_regularized = self.cov[gesture] + 0.01*np.eye(3)
             inv = self.inverse(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
             tmp = -0.5 * self.matrix_mult(diff,inv)
@@ -82,13 +78,12 @@ class GMM():
 
             if pdf > mPdf:
                 mPdf = pdf
-                if mPdf > self.thres:
+                if mPdf > threshold:
                     mGesture = gesture
             
         return mGesture, mPdf
 
     def determinant(self, M):
-        det = (M[0][0]*((M[1][1]*M[2][2])-(M[2][1]*M[1][2]))) - (M[0][1]*((M[1][0]*M[2][2])-(M[2][0]*M[1][2]))) + (M[0][2]*((M[1][0]*M[2][1])-(M[2][0]*M[1][1])))
         return (M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) -
                 M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) +
                 M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]))
@@ -98,8 +93,6 @@ class GMM():
            M1[0]*M2[0][1] + M1[1]*M2[1][1] + M1[2]*M2[2][1],
            M1[0]*M2[0][2] + M1[1]*M2[1][2] + M1[2]*M2[2][2]]
         return tmp[0]*M1[0] + tmp[1]*M1[1] + tmp[2]*M1[2]
-
-        
 
     def inverse(self, M):
         det = self.determinant(M)

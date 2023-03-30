@@ -1,7 +1,6 @@
 import time
 import board
 import digitalio
-from ml.gmm import GMM
 import adafruit_lsm6ds.lsm6ds33
 from helpers.helpers import Helpers
 import circuitpython_csv as csv
@@ -9,9 +8,9 @@ import circuitpython_csv as csv
 
 class Calibration:
     helpers = Helpers()
-    gmm = GMM()
 
-    def __init__(self, display_manager):
+    def __init__(self, display_manager, gmm):
+        self.gmm = gmm
         self.display_manager = display_manager
         self.i2c = board.I2C()
         self.sensor = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
@@ -29,7 +28,7 @@ class Calibration:
         self.calibrate_btn_last_touch_val = False
 
     def calibrate(self):
-        filename = "profiles/profile_1_data.csv"
+        filename = "gesture_training_dataset.csv"
         with open(filename, mode="w", encoding="utf-8") as file:
             start_time = time.monotonic()
             writer = csv.writer(file)
@@ -54,9 +53,9 @@ class Calibration:
                 writer.writerow([x, y, z, "right_click"])
                 time.sleep(0.1)
             file.close()
-        self.display_manager.calibration_completion_screen("PROCESSING")
         try:
-            self.gmm.train()
+            self.display_manager.calibration_completion_screen("PROCESSING")
+            self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
             self.display_manager.calibration_completion_screen("COMPLETED")
         except:
             self.display_manager.calibration_completion_screen(

@@ -1,5 +1,6 @@
 import time
 import board
+import simpleio
 import digitalio
 import adafruit_lsm6ds.lsm6ds33
 from helpers.helpers import Helpers
@@ -27,6 +28,8 @@ class Calibration:
         self.calibrate_btn.pull = digitalio.Pull.UP
         self.calibrate_btn_last_touch_val = False
 
+        self.buzzer = board.P0
+
     def calibrate(self):
         filename = "gesture_training_dataset.csv"
         with open(filename, mode="w", encoding="utf-8") as file:
@@ -42,6 +45,9 @@ class Calibration:
                 x, y, z = self.sensor.acceleration
                 writer.writerow([x, y, z, "left_click"])
                 time.sleep(0.1)
+            for _ in range(3):
+                simpleio.tone(self.buzzer, 440, 0.1)
+                time.sleep(0.1)
             for i in range(5, 0, -1):
                 self.display_manager.calibration_screen(
                     "R.CLICK BEGINS IN", str(i) + " seconds")
@@ -51,6 +57,9 @@ class Calibration:
             while (time.monotonic() - start_time) <= 10:
                 x, y, z = self.sensor.acceleration
                 writer.writerow([x, y, z, "right_click"])
+                time.sleep(0.1)
+            for _ in range(3):
+                simpleio.tone(self.buzzer, 440, 0.1)
                 time.sleep(0.1)
             file.close()
         try:

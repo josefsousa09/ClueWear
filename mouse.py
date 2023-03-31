@@ -1,6 +1,7 @@
 import time
 import board
 import digitalio
+import simpleio
 import adafruit_lsm6ds.lsm6ds33
 from adafruit_hid.mouse import Mouse
 import adafruit_ble
@@ -23,6 +24,8 @@ class Pointer:
         self.gmm = gmm.GMM()
         self.i2c = board.I2C()
 
+        self.buzzer = board.P0
+
         self.sensor = adafruit_lsm6ds.lsm6ds33.LSM6DS33(self.i2c)
 
         self.sensor_btn = digitalio.DigitalInOut(board.BUTTON_A)
@@ -35,6 +38,33 @@ class Pointer:
         self.calibrate_btn.direction = digitalio.Direction.INPUT
         self.calibrate_btn.pull = digitalio.Pull.UP
         self.calibrate_btn_last_touch_val = True
+
+        self.on_melody = [
+        (440, 0.25),
+        (494, 0.25),
+        (523, 0.25),
+        (587, 0.25),
+        (659, 0.25),
+        (698, 0.25),
+        (784, 0.25),
+        (880, 0.25),
+        ]
+
+        self.connection_lost_melody = [
+                        (880, 0.1),
+                        (784, 0.1),
+                        (659, 0.1),
+                        (587, 0.1),
+                        (523, 0.1),
+                        (494, 0.1),
+                        (440, 0.1),
+                        (392, 0.1),
+                        (330, 0.1),
+                        (294, 0.1),
+                        (262, 0.1),
+                        (220, 0.1),
+                        ]
+
 
         self.config_settings = self.helpers.read_config_file()
 
@@ -53,6 +83,8 @@ class Pointer:
 
     ble = adafruit_ble.BLERadio()
 
+    
+
     def sensitivity_conversion(self,value):
         if value == 1:
             return 0.25
@@ -65,13 +97,19 @@ class Pointer:
         elif value == 5:
             return 1.5
 
+    
+    def play_melody(self,melody):
+        for freq, duration in melody:
+            simpleio.tone(self.buzzer, freq, duration)
+            time.sleep(0.05)
+
     def operate_mouse(self):
         dataset_empty = self.helpers.dataset_empty("gesture_training_dataset.csv")
         if not dataset_empty:
-            print("Train")
             self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
-        # self.display_manager.ready_to_pair_screen()
+        self.display_manager.ready_to_pair_screen()
         self.ble.start_advertising(self.advertisement)
+        self.play_melody(self.on_melody)
         mouse = Mouse(self.hid.devices)
         vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
         horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
@@ -143,8 +181,9 @@ class Pointer:
 
                 self.calibrate_btn_last_touch_val = calibrate_btn_cur_state
                 self.sensor_btn_last_touch_val = sensor_btn_cur_state
-                # self.display_manager.tracking_screen(self.sensor_btn_toggle_value)
+                self.display_manager.tracking_screen(self.sensor_btn_toggle_value)
             else:
                 if not self.ble.advertising:
+                    self.play_melody(self.connection_lost_melody)
                     self.ble.start_advertising(self.advertisement)
-                # self.display_manager.ready_to_pair_screen()
+                self.display_manager.ready_to_pair_screen()

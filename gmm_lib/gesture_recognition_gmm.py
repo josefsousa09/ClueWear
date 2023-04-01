@@ -1,7 +1,6 @@
-
 from ulab import numpy as np
 
-class GMM():
+class GestureRecognitionGMM():
     def __init__(self):
         self.expected = {}
         self.cov = {}
@@ -74,7 +73,7 @@ class GMM():
             inv = self.inverse(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
             tmp = -0.5 * self.matrix_mult(diff,inv)
-            pdf = (1 / ((2 * 3.14) ** 1.5 * det ** 0.5)) * 2.718 ** tmp
+            pdf = (1 / ((((2 * 3.14) ** 1.5) * det) ** 0.5)) * 2.718 ** tmp
 
             if pdf > mPdf:
                 mPdf = pdf
@@ -88,11 +87,11 @@ class GMM():
                 M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) +
                 M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]))
     
-    def matrix_mult(self, M1, M2):
-        tmp = [M1[0]*M2[0][0] + M1[1]*M2[1][0] + M1[2]*M2[2][0],
-           M1[0]*M2[0][1] + M1[1]*M2[1][1] + M1[2]*M2[2][1],
-           M1[0]*M2[0][2] + M1[1]*M2[1][2] + M1[2]*M2[2][2]]
-        return tmp[0]*M1[0] + tmp[1]*M1[1] + tmp[2]*M1[2]
+    def matrix_mult(self, diff, inv):
+        tmp = [diff[0]*inv[0][0] + diff[1]*inv[1][0] + diff[2]*inv[2][0],
+           diff[0]*inv[0][1] + diff[1]*inv[1][1] + diff[2]*inv[2][1],
+           diff[0]*inv[0][2] + diff[1]*inv[1][2] + diff[2]*inv[2][2]]
+        return tmp[0]*diff[0] + tmp[1]*diff[1] + tmp[2]*diff[2]
 
     def inverse(self, M):
         det = self.determinant(M)

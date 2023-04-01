@@ -9,8 +9,8 @@ from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_ble.services.standard.device_info import DeviceInfoService
-from calibration.calibration import Calibration
-import gmm
+from calibration import Calibration
+import gesture_recognition_gmm
 from display_manager import DisplayManager
 from settings import Settings
 from helpers.helpers import Helpers
@@ -21,7 +21,7 @@ class Pointer:
     def __init__(self):
 
         self.display_manager = DisplayManager()
-        self.gmm = gmm.GMM()
+        self.gmm = gesture_recognition_gmm.GMM()
         self.i2c = board.I2C()
 
         self.buzzer = board.P0
@@ -77,9 +77,9 @@ class Pointer:
         manufacturer="Adafruit")
 
     advertisement = ProvideServicesAdvertisement(hid)
-    advertisement.appearance = 961
-    scan_response = Advertisement()
-    scan_response.complete_name = "CP HID"
+    advertisement.appearance = 962
+    # scan_response = Advertisement()
+    # scan_response.complete_name = "GBUID"
 
     ble = adafruit_ble.BLERadio()
 

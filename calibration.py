@@ -30,37 +30,26 @@ class Calibration:
 
         self.buzzer = board.P0
 
+        self.gestures = {"L.CLICK":"left_click","R.CLICK":"right_click"}
+
     def calibrate(self):
         filename = "gesture_training_dataset.csv"
         with open(filename, mode="w", encoding="utf-8") as file:
-            start_time = time.monotonic()
             writer = csv.writer(file)
-            for i in range(5, 0, -1):
-                self.display_manager.calibration_screen(
-                    "L.CLICK BEGINS IN", str(i) + " seconds")
-                time.sleep(1)
-            self.display_manager.calibration_screen("DO L.CLICK MOV.", "")
-            start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 10:
-                x, y, z = self.sensor.acceleration
-                writer.writerow([x, y, z, "left_click"])
-                time.sleep(0.1)
-            for _ in range(3):
-                simpleio.tone(self.buzzer, 440, 0.1)
-                time.sleep(0.1)
-            for i in range(5, 0, -1):
-                self.display_manager.calibration_screen(
-                    "R.CLICK BEGINS IN", str(i) + " seconds")
-                time.sleep(1)
-            self.display_manager.calibration_screen("DO R.CLICK MOV.", "")
-            start_time = time.monotonic()
-            while (time.monotonic() - start_time) <= 10:
-                x, y, z = self.sensor.acceleration
-                writer.writerow([x, y, z, "right_click"])
-                time.sleep(0.1)
-            for _ in range(3):
-                simpleio.tone(self.buzzer, 440, 0.1)
-                time.sleep(0.1)
+            for k,v in self.gestures.items():
+                for i in range(5, 0, -1):
+                    self.display_manager.calibration_screen(
+                        f"{k} BEGINS IN", str(i) + " seconds")
+                    time.sleep(1)
+                self.display_manager.calibration_screen(f"DO {k} MOV.", "")
+                start_time = time.monotonic()
+                while (time.monotonic() - start_time) <= 10:
+                    x, y, z = self.sensor.acceleration
+                    writer.writerow([x, y, z, v])
+                    time.sleep(0.1)
+                for _ in range(3):
+                    simpleio.tone(self.buzzer, 440, 0.1)
+                    time.sleep(0.1)
             file.close()
         try:
             self.display_manager.calibration_completion_screen("PROCESSING")
@@ -71,7 +60,7 @@ class Calibration:
                 "FAILED, TRY AGAIN")
         time.sleep(3)
 
-    def calibration(self):
+    def calibration_menu(self):
         self.display_manager.calibration_menu_screen()
 
         while True:

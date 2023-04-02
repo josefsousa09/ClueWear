@@ -57,7 +57,7 @@ class Helpers():
                     config[name] = value
         return config
     
-    def update_config_file(self,config_dict):
+    def update_config_file(self, config_dict):
         with open("config.txt", mode='r') as file:
             lines = file.readlines()
         updated_lines = []

@@ -1,20 +1,21 @@
 from ulab import numpy as np
+import math
 
 class GestureRecognitionGMM():
     def __init__(self):
         self.expected = {}
         self.cov = {}
 
-    def train(self,data):
-        for gesture, X in data.items():
-            self.expected[gesture] = self.avg(X)
+    def train(self,dataset):
+        for gesture, X in dataset.items():
+            self.expected[gesture] = self.mean(X)
             self.cov[gesture] = self.cov_matrix(X, self.expected[gesture])
         data = None
 
-    def avg(self, X):
+    def mean(self, X):
         n = len(X)
         if n < 1:
-            return (0, 0)
+            return (0, 0, 0)
 
         x_total = 0
         y_total = 0
@@ -44,8 +45,9 @@ class GestureRecognitionGMM():
         return [[var11, var12, var13], [var21, var22, var23], [var31, var32, var33]]
     
     def covariance(self, X, Y, Ex, Ey):
-        n = len(X)
-        if n <= 1:
+        if (len(X) == len(Y)) and len(X) > 1:
+            n = len(X)
+        else:
             return 0
         total = 0
         for x , y in zip(X,Y):
@@ -73,8 +75,9 @@ class GestureRecognitionGMM():
             inv = self.inverse(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
             tmp = -0.5 * self.matrix_mult(diff,inv)
-            pdf = (1 / ((((2 * 3.14) ** 1.5) * det) ** 0.5)) * 2.718 ** tmp
+            pdf = (1 / ((((2 * 3.14) ** 1.5) * det) ** 0.5)) * math.exp(tmp)
 
+            
             if pdf > mPdf:
                 mPdf = pdf
                 if mPdf > threshold:

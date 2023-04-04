@@ -6,22 +6,6 @@ class Helpers():
     def __init__(self) -> None:
         pass
 
-    def write_to_file(self,filename, data):
-        with open(filename, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(data)
-
-    def create_dataset(self,filename):
-        data = []
-        labels = []
-        with open(filename, mode="r") as file:
-            reader = csv.reader(file)
-            for line in reader:
-                data.append([float(x) for x in line[:3]])
-                time.sleep(0.1)
-                labels.append(int(line[3]))
-            return np.array(data),np.array(labels)
-
     def organise_data(self,filename):
         data = {}
         with open(filename, mode='r') as file:
@@ -34,6 +18,7 @@ class Helpers():
                     data[label] = [[float(row[0]), float(row[1]), float(row[2])]]
             return data
         
+        
     def dataset_empty(self,filename):
         with open(filename,mode='r') as file:
             reader = csv.reader(file)
@@ -42,9 +27,9 @@ class Helpers():
             else:
                 return False
 
-    def read_config_file(self):
+    def read_config_file(self,filename):
         config = {}
-        with open("config.txt",mode='r') as file:
+        with open(filename,mode='r') as file:
             for line in file:
                 if line.strip():
                     name, value = line.strip().split('=')

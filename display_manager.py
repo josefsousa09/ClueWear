@@ -64,13 +64,13 @@ class DisplayManager:
             self._update_button_labels("CANCEL", "START")
             self._update_tertiary_label("")
 
-    def view_setting(self,primary_label,secondary_label):
+    def view_setting_screen(self,primary_label,secondary_label):
             self._update_primary_label(primary_label)
             self._update_secondary_label(secondary_label)
             self._update_button_labels("EDIT","NEXT")
             self._update_tertiary_label("A+B TO EXIT")
 
-    def edit_setting(self, primary_label, secondary_label, numerical):
+    def edit_setting_screen(self, primary_label, secondary_label, numerical):
             self._update_primary_label(primary_label)
             self._update_secondary_label(secondary_label)
             if numerical:

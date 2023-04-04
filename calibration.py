@@ -32,29 +32,29 @@ class Calibration:
 
         self.gestures = {"L.CLICK":"left_click","R.CLICK":"right_click"}
 
-    def calibrate(self):
-        filename = "gesture_training_dataset.csv"
-        with open(filename, mode="w", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            for k,v in self.gestures.items():
-                for i in range(5, 0, -1):
-                    self.display_manager.calibration_screen(
-                        f"{k} BEGINS IN", str(i) + " seconds")
-                    time.sleep(1)
-                self.display_manager.calibration_screen(f"DO {k} MOV.", "")
-                start_time = time.monotonic()
-                while (time.monotonic() - start_time) <= 10:
-                    x, y, z = self.sensor.acceleration
-                    writer.writerow([x, y, z, v])
-                    time.sleep(0.1)
-                for _ in range(3):
-                    simpleio.tone(self.buzzer, 440, 0.1)
-                    time.sleep(0.1)
-            file.close()
+    def calibrate(self,gestures,filename):
         try:
-            self.display_manager.calibration_completion_screen("PROCESSING")
-            self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
-            self.display_manager.calibration_completion_screen("COMPLETED")
+            with open(filename, mode="w", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                for k,label in gestures.items():
+                    for i in range(5, 0, -1):
+                        self.display_manager.calibration_screen(
+                            f"{k} BEGINS IN", str(i) + " seconds")
+                        time.sleep(1)
+                    self.display_manager.calibration_screen(f"DO {k} MOV.", "")
+                    start_time = time.monotonic()
+                    while (time.monotonic() - start_time) <= 10:
+                        x, y, z = self.sensor.acceleration
+                        writer.writerow([x, y, z, label])
+                        time.sleep(0.1)
+                    for _ in range(3):
+                        simpleio.tone(self.buzzer, 440, 0.1) # type: ignore
+                        time.sleep(0.1)
+                file.close()
+            
+                self.display_manager.calibration_completion_screen("PROCESSING")
+                self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
+                self.display_manager.calibration_completion_screen("COMPLETED")
         except:
             self.display_manager.calibration_completion_screen(
                 "FAILED, TRY AGAIN")
@@ -68,7 +68,7 @@ class Calibration:
             cancel_calibration_btn_curr_state = self.cancel_calibration_btn.value
             if calibrate_btn_curr_state != self.calibrate_btn_last_touch_val:
                 if not calibrate_btn_curr_state:
-                    self.calibrate()
+                    self.calibrate(self.gestures,"gesture_training_dataset.csv")
                     self.display_manager.calibration_menu_screen()
             if cancel_calibration_btn_curr_state != self.cancel_calibration_btn_last_touch_val:
                 if not cancel_calibration_btn_curr_state:

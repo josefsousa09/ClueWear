@@ -3,7 +3,7 @@ import board
 import digitalio
 import simpleio
 import adafruit_lsm6ds.lsm6ds33
-from adafruit_hid.mouse import Mouse
+import  adafruit_hid.mouse
 import adafruit_ble
 from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
@@ -16,12 +16,12 @@ from settings import Settings
 from helpers.helpers import Helpers
 
 
-class Pointer:
+class Mouse:
     helpers = Helpers()
     def __init__(self):
 
         self.display_manager = DisplayManager()
-        self.gmm = gesture_recognition_gmm.GMM()
+        self.gmm = gesture_recognition_gmm.GestureRecognitionGMM()
         self.i2c = board.I2C()
 
         self.buzzer = board.P0
@@ -66,9 +66,9 @@ class Pointer:
                         ]
 
 
-        self.config_settings = self.helpers.read_config_file()
+        self.config_settings = self.helpers.read_config_file("config.txt")
 
-        self.clock = 0
+
 
     hid = HIDService()
 
@@ -110,7 +110,7 @@ class Pointer:
         self.display_manager.ready_to_pair_screen()
         self.ble.start_advertising(self.advertisement)
         self.play_melody(self.on_melody)
-        mouse = Mouse(self.hid.devices)
+        mouse = adafruit_hid.mouse.Mouse(self.hid.devices)
         vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
         horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
         vertical_inverted = self.config_settings['VERT.INVERTED']
@@ -128,24 +128,21 @@ class Pointer:
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
                     elif prediction[0] == "left_click":
-                        mouse.click(Mouse.LEFT_BUTTON)
-                        time.sleep(0.5)
-                        if (self.clock + 2) < time.monotonic():
-                            self.clock = time.monotonic()
+                        mouse.click(adafruit_hid.mouse.Mouse.LEFT_BUTTON)
+                        time.sleep(1)
+                        
                     elif prediction[0] == "right_click":
-                        mouse.click(Mouse.RIGHT_BUTTON)
-                        if (self.clock + 2) < time.monotonic():
-                            self.clock = time.monotonic()
-                            time.sleep(0.5)
+                        mouse.click(adafruit_hid.mouse.Mouse.RIGHT_BUTTON)
+                        time.sleep(1)
                 if sensor_btn_cur_state != self.sensor_btn_last_touch_val and calibrate_btn_cur_state != self.calibrate_btn_last_touch_val:
-                    time.sleep(0.5)
+                    time.sleep(1)
                     if not sensor_btn_cur_state or not calibrate_btn_cur_state:
                         self.calibrate_btn.deinit()
                         self.sensor_btn.deinit()
                         settings = Settings(self.display_manager)
                         settings.settings_menu()
                         del settings
-                        self.config_settings = self.helpers.read_config_file()
+                        self.config_settings = self.helpers.read_config_file("config.txt")
                         vertical_sensitivity = self.sensitivity_conversion(self.config_settings['VERT.SENSITIVITY'])
                         horizontal_sensitivity = self.sensitivity_conversion(self.config_settings['HORIZ.SENSITIVITY'])
                         vertical_inverted = self.config_settings['VERT.INVERTED']
@@ -166,10 +163,9 @@ class Pointer:
                     if not calibrate_btn_cur_state:
                         self.calibrate_btn.deinit()
                         self.sensor_btn.deinit()
-                        calibration = Calibration(self.display_manager,self.gmm)
-                        calibration.calibration()
+                        calibration = Calibration(self.display_manager, self.gmm)
+                        calibration.calibration_menu()
                         del calibration
-                        dataset_empty = self.helpers.dataset_empty("gesture_training_dataset.csv")
                         self.calibrate_btn = digitalio.DigitalInOut(
                             board.BUTTON_B)
                         self.calibrate_btn.direction = digitalio.Direction.INPUT

@@ -1,18 +1,15 @@
 import time
 import board
 import digitalio
-from ml.gmm import GMM
-import adafruit_lsm6ds.lsm6ds33
 from helpers.helpers import Helpers
 
 class Settings:
     helpers = Helpers()
-
     def __init__(self,display_manager):
         self.display_manager = display_manager
         self.i2c = board.I2C()
         
-        self.curr_config = self.helpers.read_config_file()
+        self.curr_config = self.helpers.read_config_file("config.txt")
         self.a_btn = digitalio.DigitalInOut(board.BUTTON_A)
         self.a_btn.direction = digitalio.Direction.INPUT
         self.a_btn.pull = digitalio.Pull.UP
@@ -48,7 +45,7 @@ class Settings:
         while True:
             a_btn_curr_state = self.a_btn.value
             b_btn_curr_state = self.b_btn.value
-            self.display_manager.view_setting(curr_setting_name, str(self.curr_config[curr_setting_name]) + "/5" if str(self.curr_config[curr_setting_name]).isdigit() else self.bool_change(self.curr_config[curr_setting_name]))
+            self.display_manager.view_setting_screen(curr_setting_name, str(self.curr_config[curr_setting_name]) + "/5" if str(self.curr_config[curr_setting_name]).isdigit() else self.bool_change(self.curr_config[curr_setting_name]))
             if a_btn_curr_state != self.a_btn_last_touch_val and b_btn_curr_state != self.b_btn_last_touch_val:
                 time.sleep(0.5)
                 if not a_btn_curr_state or not b_btn_curr_state:
@@ -58,7 +55,7 @@ class Settings:
             if a_btn_curr_state != self.a_btn_last_touch_val:
                 if not a_btn_curr_state:  
                     self.edit_setting(curr_setting_name)
-                    self.display_manager.view_setting(curr_setting_name, str(self.curr_config[curr_setting_name]) + "/5" if str(self.curr_config[curr_setting_name]).isdigit() else self.bool_change(self.curr_config[curr_setting_name]))
+                    self.display_manager.view_setting_screen(curr_setting_name, str(self.curr_config[curr_setting_name]) + "/5" if str(self.curr_config[curr_setting_name]).isdigit() else self.bool_change(self.curr_config[curr_setting_name]))
             if b_btn_curr_state != self.b_btn_last_touch_val:
                 if not b_btn_curr_state:
                     curr_setting_name = self.next_setting(curr_setting_name)
@@ -73,7 +70,7 @@ class Settings:
         while running:
             a_btn_curr_state = self.a_btn.value
             b_btn_curr_state = self.b_btn.value
-            self.display_manager.edit_setting(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
+            self.display_manager.edit_setting_screen(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
             
             if a_btn_curr_state != self.a_btn_last_touch_val and b_btn_curr_state != self.b_btn_last_touch_val:
                 time.sleep(0.5)
@@ -91,7 +88,7 @@ class Settings:
                     elif temp == True:
                         temp = False
                     
-                    self.display_manager.edit_setting(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
+                    self.display_manager.edit_setting_screen(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
                 
             if b_btn_curr_state != self.b_btn_last_touch_val:
                 if not b_btn_curr_state:
@@ -102,7 +99,7 @@ class Settings:
                             temp = str(num)
                     elif temp == False:
                         temp = True
-                    self.display_manager.edit_setting(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
+                    self.display_manager.edit_setting_screen(curr_setting, str(temp) + "/5" if str(temp).isdigit() else self.bool_change(temp),is_numerical)
             self.a_btn_last_touch_val = a_btn_curr_state
             self.b_btn_last_touch_val = b_btn_curr_state
 

@@ -1,8 +1,8 @@
-from mouse import Pointer
+from mouse import Mouse
 import gc
 
-pointer = Pointer()
+mouse = Mouse()
 gc.enable()
 
 while True:
-    pointer.operate_mouse()
+    mouse.operate_mouse()

@@ -78,8 +78,7 @@ class Mouse:
 
     advertisement = ProvideServicesAdvertisement(hid)
     advertisement.appearance = 962
-    # scan_response = Advertisement()
-    # scan_response.complete_name = "GBUID"
+
 
     ble = adafruit_ble.BLERadio()
 
@@ -105,8 +104,7 @@ class Mouse:
 
     def operate_mouse(self):
         dataset_empty = self.helpers.dataset_empty("gesture_training_dataset.csv")
-        if not dataset_empty:
-            self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
+        self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
         self.display_manager.ready_to_pair_screen()
         self.ble.start_advertising(self.advertisement)
         self.play_melody(self.on_melody)
@@ -123,8 +121,8 @@ class Mouse:
                     x, y, z = self.sensor.acceleration
                     prediction, m = self.gmm.pdf_classifier([x,y,z], 0.01) if not dataset_empty else "?", None
                     if prediction[0] == "?":
-                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted == True else round(x) * horizontal_sensitivity 
-                        vertical_mov = round(-y) * vertical_inverted if vertical_inverted == True else round(y) * vertical_sensitivity 
+                        horizontal_mov = round(-y) * horizontal_sensitivity if horizontal_inverted == True else round(y) * horizontal_sensitivity 
+                        vertical_mov = round(-x) * vertical_inverted if vertical_inverted == True else round(x) * vertical_sensitivity 
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
                     elif prediction[0] == "left_click":

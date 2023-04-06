@@ -120,9 +120,9 @@ class Mouse:
                 calibrate_btn_cur_state = self.calibrate_btn.value
                 if self.sensor_btn_toggle_value:
                     x, y, z = self.sensor.acceleration
-                    prediction, m = self.gmm.pdf_classifier([x,y,z], 0.0005 ) if not dataset_empty else "?", None
+                    prediction, m = self.gmm.pdf_classifier([x,y,z], 0.005 ) if not dataset_empty else "?", None
                     if prediction[0] == "?":
-                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted == True else round(y) * horizontal_sensitivity 
+                        horizontal_mov = round(-y) * horizontal_sensitivity if horizontal_inverted == True else round(y) * horizontal_sensitivity 
                         vertical_mov = round(-x) * vertical_inverted if vertical_inverted == True else round(x) * vertical_sensitivity 
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))

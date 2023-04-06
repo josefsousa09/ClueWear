@@ -5,6 +5,7 @@ import digitalio
 import adafruit_lsm6ds.lsm6ds33
 from helpers.helpers import Helpers
 import circuitpython_csv as csv
+import gc
 
 
 class Calibration:
@@ -30,28 +31,28 @@ class Calibration:
 
         self.buzzer = board.P0
 
-        self.gestures = {"L.CLICK":"left_click","R.CLICK":"right_click"}
+        self.gestures = ["L.CLICK","R.CLICK"]
 
     def calibrate(self,gestures,filename):
         try:
             with open(filename, mode="w", encoding="utf-8") as file:
                 writer = csv.writer(file)
-                for k,label in gestures.items():
+                for gesture in gestures:
                     for i in range(5, 0, -1):
                         self.display_manager.calibration_screen(
-                            f"{k} BEGINS IN", str(i) + " seconds")
+                            f"{gesture} BEGINS IN", str(i) + " seconds")
                         time.sleep(1)
-                    self.display_manager.calibration_screen(f"DO {k} MOV.", "")
+                    self.display_manager.calibration_screen(f"DO {gesture} MOV.", "")
                     start_time = time.monotonic()
                     while (time.monotonic() - start_time) <= 10:
                         x, y, z = self.sensor.acceleration
-                        writer.writerow([x, y, z, label])
+                        writer.writerow([x, y, z, gesture])
                         time.sleep(0.1)
                     for _ in range(3):
                         simpleio.tone(self.buzzer, 440, 0.1) # type: ignore
                         time.sleep(0.1)
                 file.close()
-            
+                gc.collect()
                 self.display_manager.calibration_completion_screen("PROCESSING")
                 self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
                 self.display_manager.calibration_completion_screen("COMPLETED")

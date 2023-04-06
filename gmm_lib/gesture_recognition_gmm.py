@@ -75,7 +75,7 @@ class GestureRecognitionGMM():
             inv = self.inverse(self.cov[gesture])
             det = self.determinant(self.cov[gesture])
             tmp = -0.5 * self.matrix_mult(diff,inv)
-            pdf = (1 / ((((2 * 3.14) ** 1.5) * det) ** 0.5)) * math.exp(tmp)
+            pdf = (1 / (2* 3.14 ** 1.5 * det**0.5)) * math.exp(tmp)
 
             
             if pdf > mPdf:

@@ -104,7 +104,8 @@ class Mouse:
 
     def operate_mouse(self):
         dataset_empty = self.helpers.dataset_empty("gesture_training_dataset.csv")
-        self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
+        if not dataset_empty:
+            self.gmm.train(self.helpers.organise_data("gesture_training_dataset.csv"))
         self.display_manager.ready_to_pair_screen()
         self.ble.start_advertising(self.advertisement)
         self.play_melody(self.on_melody)
@@ -119,19 +120,19 @@ class Mouse:
                 calibrate_btn_cur_state = self.calibrate_btn.value
                 if self.sensor_btn_toggle_value:
                     x, y, z = self.sensor.acceleration
-                    prediction, m = self.gmm.pdf_classifier([x,y,z], 0.01) if not dataset_empty else "?", None
+                    prediction, m = self.gmm.pdf_classifier([x,y,z], 0.0005 ) if not dataset_empty else "?", None
                     if prediction[0] == "?":
-                        horizontal_mov = round(-y) * horizontal_sensitivity if horizontal_inverted == True else round(y) * horizontal_sensitivity 
+                        horizontal_mov = round(-x) * horizontal_sensitivity if horizontal_inverted == True else round(y) * horizontal_sensitivity 
                         vertical_mov = round(-x) * vertical_inverted if vertical_inverted == True else round(x) * vertical_sensitivity 
                         mouse.move(x=int(horizontal_mov))
                         mouse.move(y=int(vertical_mov))
-                    elif prediction[0] == "left_click":
+                    elif prediction[0] == "L.CLICK":
                         mouse.click(adafruit_hid.mouse.Mouse.LEFT_BUTTON)
-                        time.sleep(1)
+                        time.sleep(0.5)
                         
-                    elif prediction[0] == "right_click":
+                    elif prediction[0] == "R.CLICK":
                         mouse.click(adafruit_hid.mouse.Mouse.RIGHT_BUTTON)
-                        time.sleep(1)
+                        time.sleep(0.5)
                 if sensor_btn_cur_state != self.sensor_btn_last_touch_val and calibrate_btn_cur_state != self.calibrate_btn_last_touch_val:
                     time.sleep(1)
                     if not sensor_btn_cur_state or not calibrate_btn_cur_state:
